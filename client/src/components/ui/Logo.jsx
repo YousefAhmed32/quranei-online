@@ -42,10 +42,10 @@ export default function Logo({ size = 'md', className = '' }) {
           fontFamily: 'Cinzel, serif',
           letterSpacing: '0.1em',
         }}>
-          QURANI
+          Qurani
         </div>
         <div className="text-xs tracking-widest" style={{ color: '#5e779a', fontFamily: 'Cinzel, serif' }}>
-          ONLINE
+          Online
         </div>
       </div>
     </div>

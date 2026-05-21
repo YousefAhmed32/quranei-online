@@ -19,9 +19,14 @@ export default function ImageUpload({ value = '', onChange, label = 'الصور�
   const [dragOver, setDragOver]   = useState(false)
 
   // Derive preview URL
-  const preview = value
-    ? (value.startsWith('http') ? value : `/api/media/stream/${value}`)
-    : ''
+// const API_BASE = import.meta.env.VITE_API_URL || 'https://api.quranei.com'
+
+const API_BASE = (import.meta.env.VITE_API_URL || 'https://api.quranei.com/api')
+  .replace(/\/api$/, '') // يشيل /api من الآخر لو موجود
+
+const preview = value
+  ? (value.startsWith('http') ? value : `${API_BASE}/api/media/stream/${value}`)
+  : ''
 
   const handleFile = async (file) => {
     if (!file) return

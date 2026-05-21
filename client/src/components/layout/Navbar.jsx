@@ -41,25 +41,74 @@ function WAIcon({ size = 15 }) {
 function Logo({ size = 40 }) {
   return (
     <Link to="/" style={{ textDecoration: 'none', flexShrink: 0 }}>
-      <motion.div whileHover={{ scale: 1.03 }} transition={{ duration: 0.22 }}
-        style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div style={{
-          width: size, height: size, borderRadius: '50%', overflow: 'hidden', flexShrink: 0,
-          border: '1px solid rgba(201,149,74,0.42)', boxShadow: '0 0 16px rgba(201,149,74,0.22)',
-          background: '#fff',
-        }}>
-          <img src="/image/logo-png.png" alt="قرآني أونلاين"
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="eager" />
+      <motion.div
+        whileHover={{ scale: 1.03 }}
+        transition={{ duration: 0.22 }}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+        }}
+      >
+        <div
+          style={{
+            width: size,
+            height: size,
+            borderRadius: '50%',
+            overflow: 'hidden',
+            flexShrink: 0,
+            border: '1px solid rgba(201,149,74,0.42)',
+            boxShadow: '0 0 16px rgba(201,149,74,0.22)',
+            background: '#fff',
+          }}
+        >
+          <img
+            src="/image/logo-png.png"
+            alt="قرآني أونلاين"
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+            }}
+            loading="eager"
+          />
         </div>
-        <div style={{ lineHeight: 1.15 }}>
-          <div style={{ fontFamily: "'Cairo', sans-serif", fontWeight: 800,
-            fontSize: size > 36 ? 15 : 13, color: T.goldPale, letterSpacing: '0.05em' }}>
+
+        <div
+          style={{
+            lineHeight: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+          }}
+        >
+          <div
+            style={{
+              fontFamily: "'Cairo', sans-serif",
+              fontWeight: 800,
+              fontSize: size > 36 ? 15 : 13,
+              color: T.goldPale,
+              letterSpacing: '0.04em',
+              textShadow: '0 0 12px rgba(201,149,74,0.18)',
+            }}
+          >
             قُرآني
           </div>
-          <div style={{ fontFamily: "'Cairo', sans-serif", fontSize: 8,
-            letterSpacing: '0.28em', color: 'rgba(232,201,138,0.4)', marginTop: 1 }}>
-            ONLINE
-          </div>
+<div
+  style={{
+    fontFamily: "'Alata', sans-serif",
+    fontSize: size > 36 ? 10 : 9,
+    fontWeight: 500,
+    letterSpacing: '0.10em',
+    color: 'rgba(255,255,255,0.68)',
+    marginTop: 5,
+    paddingRight: 1,
+    whiteSpace: 'nowrap',
+    lineHeight: '11px',
+  }}
+>
+  Online
+</div>
         </div>
       </motion.div>
     </Link>

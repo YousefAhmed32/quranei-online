@@ -84,7 +84,7 @@ function WhatsAppBtn({ course }) {
 /* ─── Course Card ─── */
 function CourseCard({ course, index }) {
   const imgSrc = course.thumbnail
-    ? (course.thumbnail.startsWith('http') ? course.thumbnail : `/api/media/stream/${course.thumbnail}`)
+    ? (course.thumbnail.startsWith('http') ? course.thumbnail : `https://api.quranei.com/api/media/stream/${course.thumbnail}`)
     : null
 
   const lvl = LVL_PILL[course.level] || LVL_PILL.all

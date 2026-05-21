@@ -1,25 +1,27 @@
 import qToast from '../../components/ui/Toast'
 import ImageUpload from '../../components/ui/ImageUpload'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Link, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, BookOpen, GraduationCap, Users, Settings,
   LogOut, Menu, X, Bell, Search, Plus,
   Eye, EyeOff, Trash2, Edit3, Star, StarOff, Upload,
-  Save, Globe, BarChart3, TrendingUp
+  Save, Globe, ChevronRight,
 } from 'lucide-react'
 import useAuthStore from '../../store/authStore'
-import { courseService, teacherService, mediaService } from '../../services/api'
+import { courseService, teacherService } from '../../services/api'
 
-// ─── Design Tokens ────────────────────────────────────────────────────────────
-const G   = '#dfab70'
-const GD  = '#906130'
+/* ═══════════════════════════
+   TOKENS
+═══════════════════════════ */
+const G = '#dfab70'
+const GD = '#906130'
 const NAV = '#040816'
 
-// ─── Micro-components ─────────────────────────────────────────────────────────
-
-/** Gold gradient button */
+/* ═══════════════════════════
+   MICRO COMPONENTS
+═══════════════════════════ */
 function GoldBtn({ children, onClick, disabled, sm, danger }) {
   return (
     <motion.button
@@ -29,18 +31,16 @@ function GoldBtn({ children, onClick, disabled, sm, danger }) {
       disabled={disabled}
       style={{
         display: 'flex', alignItems: 'center', gap: 7,
-        padding: sm ? '7px 14px' : '10px 20px',
+        padding: sm ? '7px 14px' : 'clamp(8px,1.5vw,10px) clamp(14px,2.5vw,20px)',
+        minHeight: 40,
         borderRadius: 11, border: 'none', cursor: disabled ? 'not-allowed' : 'pointer',
         fontFamily: 'Cairo, sans-serif', fontWeight: 800,
         fontSize: sm ? 12 : 13, opacity: disabled ? 0.55 : 1,
-        background: danger
-          ? 'linear-gradient(135deg,#7f1d1d,#ef4444)'
-          : `linear-gradient(135deg,${GD},${G})`,
+        background: danger ? 'linear-gradient(135deg,#7f1d1d,#ef4444)' : `linear-gradient(135deg,${GD},${G})`,
         color: danger ? '#fff' : NAV,
-        boxShadow: disabled ? 'none' : danger
-          ? '0 0 18px rgba(239,68,68,0.3)'
-          : `0 0 18px rgba(223,171,112,0.28)`,
+        boxShadow: disabled ? 'none' : danger ? '0 0 18px rgba(239,68,68,0.3)' : `0 0 18px rgba(223,171,112,0.28)`,
         transition: 'box-shadow .2s',
+        whiteSpace: 'nowrap',
       }}
     >
       {children}
@@ -48,11 +48,12 @@ function GoldBtn({ children, onClick, disabled, sm, danger }) {
   )
 }
 
-/** Ghost button */
 function GhostBtn({ children, onClick }) {
   return (
     <button onClick={onClick} style={{
-      padding: '9px 18px', borderRadius: 11, border: '1px solid rgba(223,171,112,0.12)',
+      minHeight: 40,
+      padding: '9px 18px', borderRadius: 11,
+      border: '1px solid rgba(223,171,112,0.12)',
       background: 'rgba(255,255,255,0.03)', color: 'rgba(255,255,255,0.4)',
       fontFamily: 'Cairo, sans-serif', fontSize: 13, cursor: 'pointer',
       transition: 'all .2s',
@@ -65,7 +66,6 @@ function GhostBtn({ children, onClick }) {
   )
 }
 
-/** Luxury glass card */
 function Card({ children, style = {}, p = 22, hover = true }) {
   const [h, setH] = useState(false)
   return (
@@ -87,7 +87,6 @@ function Card({ children, style = {}, p = 22, hover = true }) {
         ...style,
       }}
     >
-      {/* top shimmer line */}
       <div style={{
         position: 'absolute', top: 0, left: '15%', right: '15%', height: 1,
         background: 'linear-gradient(90deg,transparent,rgba(223,171,112,0.35),transparent)',
@@ -98,17 +97,12 @@ function Card({ children, style = {}, p = 22, hover = true }) {
   )
 }
 
-/** Luxury input */
 function LuxInput({ label, value, onChange, placeholder, type = 'text', rows, dir, disabled, style: s }) {
   const [focused, setFocused] = useState(false)
   const Tag = rows ? 'textarea' : 'input'
   return (
     <div>
-      {label && (
-        <div style={{ color: G, fontSize: 11, fontWeight: 700, marginBottom: 5, letterSpacing: '.4px' }}>
-          {label}
-        </div>
-      )}
+      {label && <div style={{ color: G, fontSize: 11, fontWeight: 700, marginBottom: 5 }}>{label}</div>}
       <Tag
         value={value} onChange={onChange} placeholder={placeholder}
         type={type} rows={rows} disabled={disabled}
@@ -130,7 +124,6 @@ function LuxInput({ label, value, onChange, placeholder, type = 'text', rows, di
   )
 }
 
-/** Select wrapper */
 function LuxSelect({ label, value, onChange, children }) {
   return (
     <div>
@@ -147,7 +140,7 @@ function LuxSelect({ label, value, onChange, children }) {
   )
 }
 
-/** Luxury modal */
+/* ── MODAL — mobile-safe max-height & padding ── */
 function LuxModal({ open, onClose, title, children, wide }) {
   return (
     <AnimatePresence>
@@ -157,36 +150,35 @@ function LuxModal({ open, onClose, title, children, wide }) {
           onClick={e => e.target === e.currentTarget && onClose()}
           style={{
             position: 'fixed', inset: 0, zIndex: 100,
-            background: 'rgba(0,0,0,0.78)', backdropFilter: 'blur(14px)',
+            background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(14px)',
             display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
-            overflowY: 'auto', padding: '40px 20px',
+            overflowY: 'auto',
+            padding: 'clamp(16px, 5vw, 40px) clamp(12px, 4vw, 20px)',
           }}
         >
           <motion.div
-            initial={{ scale: .88, y: 28 }} animate={{ scale: 1, y: 0 }}
-            exit={{ scale: .88, y: 28 }}
-            transition={{ ease: [0.22, 1, 0.36, 1], duration: .38 }}
+            initial={{ scale: .9, y: 24 }} animate={{ scale: 1, y: 0 }}
+            exit={{ scale: .9, y: 24 }}
+            transition={{ ease: [0.22, 1, 0.36, 1], duration: .35 }}
             style={{
               width: '100%', maxWidth: wide ? 720 : 560,
               background: 'rgba(7,15,28,0.98)',
               border: '1px solid rgba(223,171,112,0.22)',
-              borderRadius: 22, overflow: 'hidden',
-              boxShadow: '0 40px 100px rgba(0,0,0,0.85)',
+              borderRadius: 20, overflow: 'hidden',
+              boxShadow: '0 36px 90px rgba(0,0,0,0.85)',
             }}
           >
-            {/* Header */}
             <div style={{
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              padding: '18px 24px',
+              padding: '16px 20px',
               background: 'rgba(17,40,71,0.5)',
               borderBottom: '1px solid rgba(223,171,112,0.1)',
             }}>
-              <span style={{ color: '#fff', fontSize: 15, fontWeight: 800 }}>{title}</span>
+              <span style={{ color: '#fff', fontSize: 14, fontWeight: 800 }}>{title}</span>
               <button onClick={onClose} style={{
-                width: 30, height: 30, borderRadius: 8, border: 'none',
+                width: 32, height: 32, borderRadius: 8, border: 'none',
                 background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.4)',
                 cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                transition: 'all .2s',
               }}
                 onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.15)'; e.currentTarget.style.color = '#ef4444' }}
                 onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = 'rgba(255,255,255,0.4)' }}
@@ -194,8 +186,11 @@ function LuxModal({ open, onClose, title, children, wide }) {
                 <X size={14} />
               </button>
             </div>
-            {/* Body */}
-            <div style={{ padding: 24, maxHeight: '74vh', overflowY: 'auto' }}>
+            <div style={{
+              padding: 'clamp(16px, 3.5vw, 24px)',
+              maxHeight: 'calc(100dvh - 140px)',
+              overflowY: 'auto',
+            }}>
               {children}
             </div>
           </motion.div>
@@ -205,51 +200,236 @@ function LuxModal({ open, onClose, title, children, wide }) {
   )
 }
 
-// ─── Shared form field wrapper (kept for backward compat) ──────────────────────
-function FormField({ label, children }) {
-  return (
-    <div>
-      <div style={{ color: G, fontSize: 11, fontWeight: 700, marginBottom: 5 }}>{label}</div>
-      {children}
-    </div>
-  )
-}
-
-// ─── Sidebar ──────────────────────────────────────────────────────────────────
+/* ═══════════════════════════
+   SIDEBAR ITEMS
+═══════════════════════════ */
 const SIDEBAR = [
-  { id: 'overview',  label: 'نظرة عامة', icon: LayoutDashboard },
-  { id: 'courses',   label: 'الدورات',    icon: BookOpen },
-  { id: 'teachers',  label: 'المعلمون',   icon: GraduationCap },
-  { id: 'students',  label: 'الطلاب',     icon: Users },
-  { id: 'settings',  label: 'الإعدادات',  icon: Settings },
+  { id: 'overview', label: 'نظرة عامة', icon: LayoutDashboard },
+  { id: 'courses', label: 'الدورات', icon: BookOpen },
+  { id: 'teachers', label: 'المعلمون', icon: GraduationCap },
+  { id: 'students', label: 'الطلاب', icon: Users },
+  { id: 'settings', label: 'الإعدادات', icon: Settings },
 ]
 
-// ─── Layout shell ─────────────────────────────────────────────────────────────
+/* ═══════════════════════════
+   ADMIN SHELL
+   — Desktop: collapsible sidebar
+   — Mobile:  drawer overlay
+═══════════════════════════ */
 function AdminShell({ active, setActive, children }) {
   const { user, logout } = useAuthStore()
-  const [sidebarOpen, setSidebarOpen] = useState(true)
   const navigate = useNavigate()
+
+  // desktop sidebar open/closed
+  const [sidebarOpen, setSidebarOpen] = useState(true)
+  // mobile drawer
+  const [drawerOpen, setDrawerOpen] = useState(false)
+
+  // close drawer on nav
+  const handleNav = (id) => { setActive(id); setDrawerOpen(false) }
   const handleLogout = () => { logout(); navigate('/login') }
+
+  // sidebar content (shared between desktop and drawer)
+  const SidebarContent = ({ collapsed }) => (
+    <>
+      <nav style={{ flex: 1, padding: '14px 0', overflowY: 'auto', overflowX: 'hidden' }}>
+        {SIDEBAR.map((item, idx) => {
+          const Icon = item.icon
+          const isActive = active === item.id
+          return (
+            <motion.button
+              key={item.id}
+              onClick={() => handleNav(item.id)}
+              initial={{ opacity: 0, x: -16 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: idx * 0.05 }}
+              style={{
+                width: '100%', display: 'flex', alignItems: 'center',
+                gap: 11, padding: '12px 18px',
+                background: isActive ? 'rgba(223,171,112,0.07)' : 'transparent',
+                border: 'none',
+                borderRight: isActive ? `2.5px solid ${G}` : '2.5px solid transparent',
+                color: isActive ? G : 'rgba(255,255,255,0.36)',
+                cursor: 'pointer', transition: 'all .22s ease',
+                position: 'relative', minHeight: 44,
+              }}
+              onMouseEnter={e => { if (!isActive) { e.currentTarget.style.color = 'rgba(255,255,255,0.72)'; e.currentTarget.style.background = 'rgba(223,171,112,0.04)' } }}
+              onMouseLeave={e => { if (!isActive) { e.currentTarget.style.color = 'rgba(255,255,255,0.36)'; e.currentTarget.style.background = 'transparent' } }}
+            >
+              {isActive && (
+                <motion.div layoutId={`nav-glow-${collapsed ? 'd' : 'm'}`} style={{
+                  position: 'absolute', inset: 0,
+                  background: 'linear-gradient(90deg,rgba(223,171,112,0.09) 0%,transparent 100%)',
+                }} transition={{ duration: .26 }} />
+              )}
+              <div style={{ flexShrink: 0, position: 'relative' }}>
+                {isActive && <div style={{ position: 'absolute', inset: -4, borderRadius: '50%', background: 'rgba(223,171,112,0.11)' }} />}
+                <Icon size={17} />
+              </div>
+              {!collapsed && (
+                <span style={{ fontSize: 13, fontWeight: isActive ? 700 : 500, whiteSpace: 'nowrap' }}>
+                  {item.label}
+                </span>
+              )}
+            </motion.button>
+          )
+        })}
+      </nav>
+
+      {/* User row */}
+      <div style={{ padding: 14, flexShrink: 0, borderTop: '1px solid rgba(223,171,112,0.08)' }}>
+        {!collapsed ? (
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 10,
+            padding: '9px 11px', borderRadius: 12,
+            background: 'rgba(223,171,112,0.04)',
+            border: '1px solid rgba(223,171,112,0.08)',
+          }}>
+            <div style={{
+              width: 34, height: 34, borderRadius: '50%', flexShrink: 0,
+              background: `linear-gradient(135deg,${GD},${G})`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 13, fontWeight: 800, color: NAV,
+            }}>
+              {user?.name?.charAt(0) || 'أ'}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ color: '#fff', fontSize: 12, fontWeight: 700, lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {user?.name}
+              </div>
+              <div style={{ color: 'rgba(223,171,112,0.45)', fontSize: 11 }}>مدير المنصة</div>
+            </div>
+            <button onClick={handleLogout}
+              style={{ padding: 7, borderRadius: 8, border: 'none', background: 'transparent', color: 'rgba(255,255,255,0.3)', cursor: 'pointer', display: 'flex', transition: 'color .2s', minWidth: 32, minHeight: 32, alignItems: 'center', justifyContent: 'center' }}
+              onMouseEnter={e => e.currentTarget.style.color = '#ef4444'}
+              onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.3)'}
+            >
+              <LogOut size={15} />
+            </button>
+          </div>
+        ) : (
+          <button onClick={handleLogout} style={{
+            width: '100%', display: 'flex', justifyContent: 'center',
+            padding: '10px', borderRadius: 10, border: 'none',
+            background: 'transparent', color: 'rgba(255,255,255,0.28)', cursor: 'pointer',
+            minHeight: 44, alignItems: 'center',
+          }}>
+            <LogOut size={15} />
+          </button>
+        )}
+      </div>
+    </>
+  )
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', direction: 'rtl', background: NAV, fontFamily: 'Cairo, sans-serif' }}>
 
-      {/* Ambient background */}
+      <style>{`
+        /* ── Admin responsive rules ── */
+
+        /* Mobile drawer */
+        .admin-drawer-overlay {
+          position: fixed; inset: 0; z-index: 50;
+          background: rgba(0,0,0,0.72); backdrop-filter: blur(6px);
+        }
+        .admin-drawer {
+          position: fixed; top: 0; right: 0; bottom: 0; z-index: 51;
+          width: 260px; max-width: 85vw;
+          background: rgba(4,8,22,0.97);
+          border-left: 1px solid rgba(223,171,112,0.1);
+          display: flex; flex-direction: column;
+          box-shadow: -8px 0 40px rgba(0,0,0,0.5);
+        }
+
+        /* Desktop sidebar — hidden on mobile */
+        .admin-sidebar-desktop {
+          display: none;
+        }
+        @media (min-width: 768px) {
+          .admin-sidebar-desktop { display: flex; }
+        }
+
+        /* Mobile hamburger — hidden on desktop */
+        .admin-mobile-menu {
+          display: flex;
+        }
+        @media (min-width: 768px) {
+          .admin-mobile-menu { display: none; }
+        }
+
+        /* Topbar search — hide on small screens */
+        .admin-topbar-search {
+          display: none;
+        }
+        @media (min-width: 640px) {
+          .admin-topbar-search { display: flex; }
+        }
+
+        /* Stats grid responsive */
+        .admin-stats-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: clamp(10px, 2.5vw, 14px);
+        }
+        @media (min-width: 640px) {
+          .admin-stats-grid { grid-template-columns: repeat(4, 1fr); }
+        }
+
+        /* Quick actions grid */
+        .admin-quick-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: clamp(10px, 2.5vw, 12px);
+        }
+        @media (min-width: 640px) {
+          .admin-quick-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+        }
+
+        /* Teachers cards grid */
+        .admin-teachers-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 14px;
+        }
+        @media (min-width: 480px) { .admin-teachers-grid { grid-template-columns: 1fr 1fr; } }
+        @media (min-width: 960px) { .admin-teachers-grid { grid-template-columns: repeat(3, 1fr); } }
+
+        /* Courses form grid — responsive */
+        .admin-form-grid-2 {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 12px;
+        }
+        @media (min-width: 480px) {
+          .admin-form-grid-2 { grid-template-columns: 1fr 1fr; }
+        }
+
+        @keyframes adminPulse { 0%,100%{opacity:.35} 50%{opacity:.62} }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: #040816; }
+        ::-webkit-scrollbar-thumb { background: #906130; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #dfab70; }
+        ::selection { background: rgba(223,171,112,0.28); color: #dfab70; }
+        option { background: #08111f; color: #fff; }
+      `}</style>
+
+      {/* ── Ambient BG ── */}
       <div style={{
         position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0,
         background: `
           radial-gradient(ellipse at 15% 20%, rgba(223,171,112,0.05) 0%, transparent 50%),
-          radial-gradient(ellipse at 85% 80%, rgba(8,17,31,0.7) 0%, transparent 55%),
-          radial-gradient(ellipse at 50% 0%,  rgba(30,60,100,0.1) 0%, transparent 50%)
+          radial-gradient(ellipse at 85% 80%, rgba(8,17,31,0.7) 0%, transparent 55%)
         `,
       }} />
 
-      {/* ── Sidebar ── */}
+      {/* ── Desktop Sidebar ── */}
       <motion.aside
+        className="admin-sidebar-desktop"
         animate={{ width: sidebarOpen ? 240 : 70 }}
-        transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+        transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
         style={{
-          flexShrink: 0, display: 'flex', flexDirection: 'column', zIndex: 30,
+          flexShrink: 0, flexDirection: 'column', zIndex: 30,
           overflow: 'hidden', position: 'relative',
           background: 'rgba(4,8,22,0.94)',
           backdropFilter: 'blur(28px)',
@@ -257,7 +437,6 @@ function AdminShell({ active, setActive, children }) {
           boxShadow: '4px 0 40px rgba(0,0,0,0.4)',
         }}
       >
-        {/* Top shimmer */}
         <div style={{
           position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)',
           width: 100, height: 1,
@@ -266,30 +445,25 @@ function AdminShell({ active, setActive, children }) {
 
         {/* Logo row */}
         <div style={{
-          height: 76, display: 'flex', alignItems: 'center',
-          padding: '0 16px', gap: 12, flexShrink: 0,
+          height: 72, display: 'flex', alignItems: 'center',
+          padding: '0 14px', gap: 10, flexShrink: 0,
           borderBottom: '1px solid rgba(223,171,112,0.08)',
         }}>
           <AnimatePresence>
             {sidebarOpen && (
-              <motion.div
-                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                style={{ flex: 1 }}
-              >
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ flex: 1 }}>
                 <Link to="/" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <div style={{
-                    width: 46, height: 46, borderRadius: '50%',
-                    background: '#fff',
+                    width: 42, height: 42, borderRadius: '50%', background: '#fff',
                     border: '1px solid rgba(223,171,112,0.22)',
-                    boxShadow: '0 0 22px rgba(223,171,112,0.15)',
+                    boxShadow: '0 0 20px rgba(223,171,112,0.14)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     overflow: 'hidden', transition: 'transform .4s',
                   }}
                     onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.07)'}
                     onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
                   >
-                    <img src="/image/logo-png.png" alt="Qurani Online"
-                      style={{ width: '82%', height: '82%', objectFit: 'contain' }} />
+                    <img src="/image/logo-png.png" alt="Qurani Online" style={{ width: '82%', height: '82%', objectFit: 'contain' }} />
                   </div>
                 </Link>
               </motion.div>
@@ -301,7 +475,7 @@ function AdminShell({ active, setActive, children }) {
               padding: 7, borderRadius: 9, border: 'none', background: 'transparent',
               color: 'rgba(223,171,112,0.42)', cursor: 'pointer',
               marginRight: sidebarOpen ? 0 : 'auto', marginLeft: sidebarOpen ? 0 : 'auto',
-              transition: 'color .2s', display: 'flex',
+              display: 'flex', minWidth: 32, minHeight: 32, alignItems: 'center', justifyContent: 'center',
             }}
             onMouseEnter={e => e.currentTarget.style.color = G}
             onMouseLeave={e => e.currentTarget.style.color = 'rgba(223,171,112,0.42)'}
@@ -310,142 +484,100 @@ function AdminShell({ active, setActive, children }) {
           </button>
         </div>
 
-        {/* Nav */}
-        <nav style={{ flex: 1, padding: '14px 0', overflowY: 'auto', overflowX: 'hidden' }}>
-          {SIDEBAR.map((item, idx) => {
-            const Icon = item.icon
-            const isActive = active === item.id
-            return (
-              <motion.button
-                key={item.id}
-                onClick={() => setActive(item.id)}
-                initial={{ opacity: 0, x: -16 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: idx * 0.055 }}
-                style={{
-                  width: '100%', display: 'flex', alignItems: 'center',
-                  gap: 11, padding: '11px 18px',
-                  background: isActive ? 'rgba(223,171,112,0.07)' : 'transparent',
-                  border: 'none',
-                  borderRight: isActive ? `2px solid ${G}` : '2px solid transparent',
-                  color: isActive ? G : 'rgba(255,255,255,0.36)',
-                  cursor: 'pointer', transition: 'all .22s ease',
-                  position: 'relative',
-                }}
-                onMouseEnter={e => { if (!isActive) { e.currentTarget.style.color = 'rgba(255,255,255,0.72)'; e.currentTarget.style.background = 'rgba(223,171,112,0.04)' } }}
-                onMouseLeave={e => { if (!isActive) { e.currentTarget.style.color = 'rgba(255,255,255,0.36)'; e.currentTarget.style.background = 'transparent' } }}
-              >
-                {isActive && (
-                  <motion.div layoutId="nav-glow" style={{
-                    position: 'absolute', inset: 0,
-                    background: 'linear-gradient(90deg,rgba(223,171,112,0.09) 0%,transparent 100%)',
-                  }} transition={{ duration: .28 }} />
-                )}
-                <div style={{ flexShrink: 0, position: 'relative' }}>
-                  {isActive && (
-                    <div style={{
-                      position: 'absolute', inset: -4, borderRadius: '50%',
-                      background: 'rgba(223,171,112,0.11)',
-                    }} />
-                  )}
-                  <Icon size={17} />
-                </div>
-                <AnimatePresence>
-                  {sidebarOpen && (
-                    <motion.span
-                      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                      style={{ fontSize: 13, fontWeight: isActive ? 700 : 500, whiteSpace: 'nowrap' }}
-                    >
-                      {item.label}
-                    </motion.span>
-                  )}
-                </AnimatePresence>
-              </motion.button>
-            )
-          })}
-        </nav>
-
-        {/* User + Logout */}
-        <div style={{ padding: 14, flexShrink: 0, borderTop: '1px solid rgba(223,171,112,0.08)' }}>
-          {sidebarOpen ? (
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 10,
-              padding: '9px 11px', borderRadius: 12,
-              background: 'rgba(223,171,112,0.04)',
-              border: '1px solid rgba(223,171,112,0.08)',
-            }}>
-              <div style={{
-                width: 34, height: 34, borderRadius: '50%', flexShrink: 0,
-                background: `linear-gradient(135deg,${GD},${G})`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 13, fontWeight: 800, color: NAV,
-              }}>
-                {user?.name?.charAt(0) || 'أ'}
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ color: '#fff', fontSize: 12, fontWeight: 700, lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {user?.name}
-                </div>
-                <div style={{ color: 'rgba(223,171,112,0.45)', fontSize: 11 }}>مدير المنصة</div>
-              </div>
-              <button onClick={handleLogout} title="تسجيل الخروج"
-                style={{ padding: 6, borderRadius: 8, border: 'none', background: 'transparent', color: 'rgba(255,255,255,0.3)', cursor: 'pointer', display: 'flex', transition: 'color .2s' }}
-                onMouseEnter={e => e.currentTarget.style.color = '#ef4444'}
-                onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.3)'}
-              >
-                <LogOut size={15} />
-              </button>
-            </div>
-          ) : (
-            <button onClick={handleLogout} style={{
-              width: '100%', display: 'flex', justifyContent: 'center', padding: '8px',
-              borderRadius: 10, border: 'none', background: 'transparent',
-              color: 'rgba(255,255,255,0.28)', cursor: 'pointer',
-            }}>
-              <LogOut size={15} />
-            </button>
-          )}
-        </div>
+        <SidebarContent collapsed={!sidebarOpen} />
       </motion.aside>
+
+      {/* ── Mobile Drawer ── */}
+      <AnimatePresence>
+        {drawerOpen && (
+          <>
+            <motion.div
+              className="admin-drawer-overlay"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setDrawerOpen(false)}
+            />
+            <motion.div
+              className="admin-drawer"
+              initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
+              transition={{ type: 'spring', stiffness: 340, damping: 38 }}
+            >
+              <div style={{
+                height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '0 16px', borderBottom: '1px solid rgba(223,171,112,0.08)',
+              }}>
+                <span style={{ color: G, fontWeight: 800, fontSize: 14 }}>القائمة</span>
+                <button
+                  onClick={() => setDrawerOpen(false)}
+                  style={{ width: 36, height: 36, borderRadius: 9, border: 'none', background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  <X size={16} />
+                </button>
+              </div>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                <SidebarContent collapsed={false} />
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* ── Main ── */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden', position: 'relative', zIndex: 1 }}>
 
         {/* Topbar */}
         <div style={{
-          height: 66, flexShrink: 0, display: 'flex', alignItems: 'center', gap: 16, padding: '0 28px',
+          height: 64, flexShrink: 0, display: 'flex', alignItems: 'center', gap: 12,
+          padding: '0 clamp(14px, 3vw, 28px)',
           background: 'rgba(4,8,22,0.88)', backdropFilter: 'blur(24px)',
           borderBottom: '1px solid rgba(223,171,112,0.08)',
           boxShadow: '0 4px 28px rgba(0,0,0,0.3)',
         }}>
-          <div style={{ flex: 1 }}>
+          {/* Mobile hamburger */}
+          <button
+            className="admin-mobile-menu"
+            onClick={() => setDrawerOpen(true)}
+            style={{
+              width: 38, height: 38, borderRadius: 10, border: 'none',
+              background: 'rgba(223,171,112,0.06)', color: G, cursor: 'pointer',
+              alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+            }}
+          >
+            <Menu size={17} />
+          </button>
+
+          <div style={{ flex: 1, minWidth: 0 }}>
             <motion.h1
               key={active}
-              initial={{ opacity: 0, y: -7 }} animate={{ opacity: 1, y: 0 }}
-              style={{ color: '#fff', fontSize: 16, fontWeight: 900, lineHeight: 1.2 }}
+              initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }}
+              style={{ color: '#fff', fontSize: 'clamp(13px, 2.5vw, 16px)', fontWeight: 900, lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
             >
               {SIDEBAR.find(s => s.id === active)?.label}
             </motion.h1>
-            <div style={{ color: 'rgba(223,171,112,0.4)', fontSize: 11, marginTop: 1 }}>لوحة إدارة قرآني أونلاين</div>
+            <div style={{ color: 'rgba(223,171,112,0.38)', fontSize: 10, marginTop: 1 }}>قرآني أونلاين</div>
           </div>
 
-          {/* Search */}
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 9, maxWidth: 300, flex: 1,
-            background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(223,171,112,0.1)',
-            borderRadius: 10, padding: '7px 13px',
-          }}>
-            <Search size={14} style={{ color: 'rgba(223,171,112,0.42)', flexShrink: 0 }} />
-            <input placeholder="ابحث في المنصة..." style={{
+          {/* Search — hidden on xs */}
+          <div
+            className="admin-topbar-search"
+            style={{
+              alignItems: 'center', gap: 8,
+              maxWidth: 260, flex: 1,
+              background: 'rgba(255,255,255,0.04)',
+              border: '1px solid rgba(223,171,112,0.1)',
+              borderRadius: 10, padding: '7px 12px',
+            }}
+          >
+            <Search size={13} style={{ color: 'rgba(223,171,112,0.42)', flexShrink: 0 }} />
+            <input placeholder="بحث..." style={{
               background: 'transparent', border: 'none', outline: 'none',
-              color: 'rgba(255,255,255,0.7)', fontSize: 13, flex: 1,
-              fontFamily: 'Cairo, sans-serif', direction: 'rtl',
+              color: 'rgba(255,255,255,0.7)', fontSize: 12, flex: 1,
+              fontFamily: 'Cairo, sans-serif', direction: 'rtl', minWidth: 0,
             }} />
           </div>
 
           {/* Bell */}
           <button style={{
-            width: 38, height: 38, borderRadius: 10,
+            width: 38, height: 38, borderRadius: 10, flexShrink: 0,
             background: 'rgba(223,171,112,0.05)', border: '1px solid rgba(223,171,112,0.1)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             color: 'rgba(223,171,112,0.55)', cursor: 'pointer', position: 'relative',
@@ -454,16 +586,14 @@ function AdminShell({ active, setActive, children }) {
             onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(223,171,112,0.3)'; e.currentTarget.style.color = G }}
             onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(223,171,112,0.1)'; e.currentTarget.style.color = 'rgba(223,171,112,0.55)' }}
           >
-            <Bell size={16} />
-            <div style={{
-              position: 'absolute', top: 8, right: 8, width: 6, height: 6,
-              borderRadius: '50%', background: G, boxShadow: `0 0 6px ${G}`,
-            }} />
+            <Bell size={15} />
+            <div style={{ position: 'absolute', top: 8, right: 8, width: 6, height: 6, borderRadius: '50%', background: G }} />
           </button>
 
+          {/* View site — icon-only on xs */}
           <Link to="/" style={{
-            display: 'flex', alignItems: 'center', gap: 6,
-            padding: '7px 14px', borderRadius: 10,
+            display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0,
+            padding: '7px 12px', borderRadius: 10,
             border: '1px solid rgba(223,171,112,0.14)',
             color: 'rgba(223,171,112,0.65)', fontSize: 12, fontWeight: 600,
             textDecoration: 'none', transition: 'all .2s',
@@ -472,19 +602,20 @@ function AdminShell({ active, setActive, children }) {
             onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(223,171,112,0.38)'; e.currentTarget.style.color = G }}
             onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(223,171,112,0.14)'; e.currentTarget.style.color = 'rgba(223,171,112,0.65)' }}
           >
-            <Globe size={13} /> عرض الموقع
+            <Globe size={13} />
+            <span style={{ display: 'none' }} className="sm:inline">عرض الموقع</span>
           </Link>
         </div>
 
         {/* Content */}
-        <main style={{ flex: 1, overflowY: 'auto', padding: '28px 30px' }}>
+        <main style={{ flex: 1, overflowY: 'auto', padding: 'clamp(16px, 4vw, 28px) clamp(12px, 3vw, 30px)' }}>
           <AnimatePresence mode="wait">
             <motion.div
               key={active}
-              initial={{ opacity: 0, y: 14 }}
+              initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: .28, ease: [0.22, 1, 0.36, 1] }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: .26, ease: [0.22, 1, 0.36, 1] }}
             >
               {children}
             </motion.div>
@@ -495,7 +626,9 @@ function AdminShell({ active, setActive, children }) {
   )
 }
 
-// ─── Overview Panel ───────────────────────────────────────────────────────────
+/* ═══════════════════════════
+   OVERVIEW PANEL
+═══════════════════════════ */
 function OverviewPanel() {
   const [stats, setStats] = useState({ courses: 0, teachers: 0 })
 
@@ -509,79 +642,43 @@ function OverviewPanel() {
   }, [])
 
   const STATS = [
-    { label: 'إجمالي الدورات',    value: stats.courses,  icon: BookOpen,      color: G },
-    { label: 'إجمالي المعلمين',   value: stats.teachers, icon: GraduationCap, color: '#818cf8' },
-    { label: 'الطلاب المسجلون',   value: '—',            icon: Users,         color: '#22c55e' },
-    { label: 'التقييم العام',      value: '4.9★',         icon: Star,          color: G },
+    { label: 'إجمالي الدورات', value: stats.courses, icon: BookOpen, color: G },
+    { label: 'إجمالي المعلمين', value: stats.teachers, icon: GraduationCap, color: '#818cf8' },
+    { label: 'الطلاب المسجلون', value: '—', icon: Users, color: '#22c55e' },
+    { label: 'التقييم العام', value: '4.9★', icon: Star, color: G },
   ]
 
   const QUICK = [
-    { label: 'إضافة دورة جديدة', icon: Plus,         desc: 'أنشئ دورة قرآنية' },
-    { label: 'إضافة معلم',        icon: GraduationCap, desc: 'سجّل معلماً جديداً' },
-    { label: 'إدارة الوسائط',     icon: Upload,        desc: 'رفع الصور والملفات' },
-    { label: 'عرض الموقع',        icon: Globe,         desc: 'صفحة الدورات العامة' },
+    { label: 'إضافة دورة', icon: Plus, desc: 'أنشئ دورة قرآنية' },
+    { label: 'إضافة معلم', icon: GraduationCap, desc: 'سجّل معلماً جديداً' },
+    { label: 'إدارة الوسائط', icon: Upload, desc: 'رفع الصور والملفات' },
+    { label: 'عرض الموقع', icon: Globe, desc: 'صفحة الدورات العامة' },
   ]
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 26 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(16px, 3.5vw, 26px)' }}>
 
-      {/* Welcome */}
-      <Card hover={false} style={{
-        background: 'linear-gradient(135deg,rgba(17,42,78,0.65) 0%,rgba(4,8,22,0.85) 100%)',
-        borderColor: 'rgba(223,171,112,0.15)',
-      }} p={28}>
-        <div style={{
-          position: 'absolute', right: 0, top: 0, bottom: 0, width: '38%', opacity: .03,
-          backgroundImage: 'repeating-linear-gradient(45deg,rgba(223,171,112,1) 0px,rgba(223,171,112,1) 1px,transparent 1px,transparent 18px)',
-          pointerEvents: 'none',
-        }} />
-        <div style={{
-          position: 'absolute', left: 0, top: 0, bottom: 0, width: 3,
-          background: `linear-gradient(180deg,${G},${GD})`,
-          borderRadius: '0 0 0 18px',
-        }} />
-        <div style={{ color: 'rgba(223,171,112,0.48)', fontSize: 11, fontWeight: 700, letterSpacing: '2.5px', marginBottom: 7 }}>
-          ﷽
-        </div>
-        <h2 style={{ color: '#fff', fontSize: 20, fontWeight: 900, marginBottom: 5 }}>مرحباً بك في لوحة التحكم</h2>
-        <p style={{ color: 'rgba(255,255,255,0.38)', fontSize: 13 }}>
-          قرآني أونلاين — منصة تعليم القرآن الكريم الاحترافية
-        </p>
+      {/* Welcome card */}
+      <Card hover={false} style={{ background: 'linear-gradient(135deg,rgba(17,42,78,0.65) 0%,rgba(4,8,22,0.85) 100%)', borderColor: 'rgba(223,171,112,0.15)' }} p={24}>
+        <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: `linear-gradient(180deg,${G},${GD})`, borderRadius: '0 0 0 18px' }} />
+        <div style={{ color: 'rgba(223,171,112,0.48)', fontSize: 11, fontWeight: 700, letterSpacing: '2.5px', marginBottom: 6 }}>﷽</div>
+        <h2 style={{ color: '#fff', fontSize: 'clamp(15px, 3vw, 20px)', fontWeight: 900, marginBottom: 4 }}>مرحباً بك في لوحة التحكم</h2>
+        <p style={{ color: 'rgba(255,255,255,0.38)', fontSize: 'clamp(11px, 2vw, 13px)' }}>قرآني أونلاين — منصة تعليم القرآن الكريم الاحترافية</p>
       </Card>
 
-      {/* Stats grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(175px,1fr))', gap: 14 }}>
+      {/* Stats */}
+      <div className="admin-stats-grid">
         {STATS.map((s, i) => {
           const Icon = s.icon
           return (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.09, ease: [0.22, 1, 0.36, 1] }}
-            >
-              <Card p={22}>
-                {/* Radial glow */}
-                <div style={{
-                  position: 'absolute', top: -25, right: -25, width: 110, height: 110,
-                  borderRadius: '50%',
-                  background: `radial-gradient(circle,${s.color}18 0%,transparent 70%)`,
-                  pointerEvents: 'none',
-                }} />
-                <div style={{
-                  width: 42, height: 42, borderRadius: 11, marginBottom: 14,
-                  background: `linear-gradient(135deg,${s.color}22,${s.color}09)`,
-                  border: `1px solid ${s.color}30`,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  boxShadow: `0 0 18px ${s.color}1a`,
-                }}>
-                  <Icon size={18} style={{ color: s.color }} />
+            <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08, ease: [0.22, 1, 0.36, 1] }}>
+              <Card p={18}>
+                <div style={{ position: 'absolute', top: -22, right: -22, width: 90, height: 90, borderRadius: '50%', background: `radial-gradient(circle,${s.color}18 0%,transparent 70%)`, pointerEvents: 'none' }} />
+                <div style={{ width: 38, height: 38, borderRadius: 10, marginBottom: 12, background: `linear-gradient(135deg,${s.color}22,${s.color}09)`, border: `1px solid ${s.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Icon size={17} style={{ color: s.color }} />
                 </div>
-                <div style={{ fontSize: 34, fontWeight: 900, color: '#fff', letterSpacing: '-1px', lineHeight: 1 }}>
-                  {s.value}
-                </div>
-                <div style={{ fontSize: 12, color: 'rgba(223,171,112,0.52)', fontWeight: 600, marginTop: 6 }}>
-                  {s.label}
-                </div>
+                <div style={{ fontSize: 'clamp(24px, 5vw, 34px)', fontWeight: 900, color: '#fff', letterSpacing: '-1px', lineHeight: 1 }}>{s.value}</div>
+                <div style={{ fontSize: 11, color: 'rgba(223,171,112,0.52)', fontWeight: 600, marginTop: 5 }}>{s.label}</div>
               </Card>
             </motion.div>
           )
@@ -589,27 +686,19 @@ function OverviewPanel() {
       </div>
 
       {/* Quick actions */}
-      <Card hover={false} p={24}>
-        <h2 style={{ fontWeight: 800, color: '#fff', marginBottom: 16, fontSize: 15 }}>وصول سريع</h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))', gap: 12 }}>
+      <Card hover={false} p={20}>
+        <h2 style={{ fontWeight: 800, color: '#fff', marginBottom: 14, fontSize: 14 }}>وصول سريع</h2>
+        <div className="admin-quick-grid">
           {QUICK.map((q, i) => {
             const Icon = q.icon
             return (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: .28 + i * .07 }}
-              >
-                <Card p={18} style={{ cursor: 'pointer' }}>
-                  <div style={{
-                    width: 34, height: 34, borderRadius: 9, marginBottom: 11,
-                    background: 'rgba(223,171,112,0.08)', border: '1px solid rgba(223,171,112,0.16)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
-                    <Icon size={15} style={{ color: G }} />
+              <motion.div key={i} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: .24 + i * .07 }}>
+                <Card p={16} style={{ cursor: 'pointer' }}>
+                  <div style={{ width: 32, height: 32, borderRadius: 8, marginBottom: 10, background: 'rgba(223,171,112,0.08)', border: '1px solid rgba(223,171,112,0.16)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Icon size={14} style={{ color: G }} />
                   </div>
-                  <div style={{ color: '#fff', fontSize: 13, fontWeight: 700, marginBottom: 3 }}>{q.label}</div>
-                  <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11 }}>{q.desc}</div>
+                  <div style={{ color: '#fff', fontSize: 12, fontWeight: 700, marginBottom: 2 }}>{q.label}</div>
+                  <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 10 }}>{q.desc}</div>
                 </Card>
               </motion.div>
             )
@@ -620,14 +709,16 @@ function OverviewPanel() {
   )
 }
 
-// ─── Courses Panel ────────────────────────────────────────────────────────────
+/* ═══════════════════════════
+   COURSES PANEL
+   (form logic identical, layout improved)
+═══════════════════════════ */
 const EMPTY_COURSE = {
   title: '', slug: '', shortDescription: '', description: '', thumbnail: '', heroVideo: '',
-  category: 'quran', level: 'beginner', language: 'العربية', duration: '', lessonsCount: 0,
+  category: 'quran', level: 'beginner', duration: '', lessonsCount: 0,
   teacherName: '', pricingType: 'contact', price: 0, currency: 'ريال', showPrice: false,
   whatsapp: '', ctaText: 'اشترك الآن', isPublished: false, featured: false, priorityOrder: '',
   learningOutcomes: [], targetStudents: [], highlights: [], tags: [],
-  seoTitle: '', seoDescription: '',
 }
 
 function CoursesPanel() {
@@ -641,118 +732,99 @@ function CoursesPanel() {
   const [filter, setFilter] = useState('')
   const [arrDraft, setArrDraft] = useState({ learningOutcomes: '', targetStudents: '', highlights: '', tags: '' })
 
-  const load = () => {
+  const load = useCallback(() => {
     setLoading(true)
     courseService.adminGetAll({ search, ...(filter !== '' ? { isPublished: filter } : {}) })
       .then(r => setCourses(r.data.courses || []))
       .catch(() => setCourses([]))
       .finally(() => setLoading(false))
-  }
-  useEffect(load, [search, filter])
+  }, [search, filter])
 
-  const openCreate = () => {
-    setEditing(null); setForm({ ...EMPTY_COURSE })
-    setArrDraft({ learningOutcomes: '', targetStudents: '', highlights: '', tags: '' })
-    setShowForm(true)
-  }
-  const openEdit = (c) => {
+  useEffect(load, [load])
+
+  const openCreate = () => { setEditing(null); setForm({ ...EMPTY_COURSE }); setArrDraft({ learningOutcomes: '', targetStudents: '', highlights: '', tags: '' }); setShowForm(true) }
+  const openEdit = c => {
     setEditing(c); setForm({ ...EMPTY_COURSE, ...c })
-    setArrDraft({
-      learningOutcomes: c.learningOutcomes?.join('\n') || '',
-      targetStudents:   c.targetStudents?.join('\n') || '',
-      highlights:       c.highlights?.join('\n') || '',
-      tags:             c.tags?.join('، ') || '',
-    })
+    setArrDraft({ learningOutcomes: c.learningOutcomes?.join('\n') || '', targetStudents: c.targetStudents?.join('\n') || '', highlights: c.highlights?.join('\n') || '', tags: c.tags?.join('، ') || '' })
     setShowForm(true)
   }
 
-  const buildPayload = () => ({
+const buildPayload = () => {
+  return {
     ...form,
+    level:        form.level     || 'beginner',
+    category:     form.category  || 'quran',
     priorityOrder: form.priorityOrder === '' ? 0 : Number(form.priorityOrder),
-    lessonsCount:  form.lessonsCount === ''  ? 0 : Number(form.lessonsCount),
-    price:         form.price === ''         ? 0 : Number(form.price),
+    lessonsCount:  form.lessonsCount  === '' ? 0 : Number(form.lessonsCount),
+    price:         form.price         === '' ? 0 : Number(form.price),
     learningOutcomes: arrDraft.learningOutcomes.split('\n').map(s => s.trim()).filter(Boolean),
     targetStudents:   arrDraft.targetStudents.split('\n').map(s => s.trim()).filter(Boolean),
     highlights:       arrDraft.highlights.split('\n').map(s => s.trim()).filter(Boolean),
     tags:             arrDraft.tags.split(/[،,]/).map(s => s.trim()).filter(Boolean),
-  })
+  }
+}
 
   const handleSave = async () => {
     if (!form.title.trim()) return qToast.error('عنوان الدورة مطلوب')
     setSaving(true)
     try {
       const payload = buildPayload()
-      if (editing) {
-        await courseService.adminUpdate(editing._id, payload)
-        qToast.success('تم تحديث الدورة')
-      } else {
-        await courseService.adminCreate(payload)
-        qToast.success('تمت إضافة الدورة')
-      }
+      if (editing) { await courseService.adminUpdate(editing._id, payload); qToast.success('تم التحديث') }
+      else { await courseService.adminCreate(payload); qToast.success('تمت الإضافة') }
       setShowForm(false); load()
     } catch (e) { qToast.error(e.response?.data?.message || 'حدث خطأ') }
     finally { setSaving(false) }
   }
 
-  const handleDelete = async (id) => {
-    if (!confirm('هل أنت متأكد من حذف هذه الدورة؟')) return
-    await courseService.adminDelete(id).then(load).catch(() => qToast.error('خطأ في الحذف'))
+  const handleDelete = async id => {
+    if (!confirm('حذف الدورة؟')) return
+    await courseService.adminDelete(id).then(load).catch(() => qToast.error('خطأ'))
     qToast.success('تم الحذف')
   }
 
-  const handleToggle = async (c, field) => {
-    await courseService.adminUpdate(c._id, { [field]: !c[field] }).then(load)
-  }
-
-  const slugify = (t) => t.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^\w\u0621-\u064A-]/g, '').slice(0, 80)
+  const handleToggle = async (c, field) => courseService.adminUpdate(c._id, { [field]: !c[field] }).then(load)
+  const slugify = t => t.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^\w\u0621-\u064A-]/g, '').slice(0, 80)
   const setF = (k, v) => setForm(prev => ({ ...prev, [k]: v }))
 
   const CAT = { tajweed: 'التجويد', quran: 'القرآن', memorization: 'الحفظ', recitation: 'التلاوة', ijazah: 'الإجازة', correction: 'التصحيح', arabic: 'عربية', other: 'أخرى' }
   const LVL = { beginner: 'مبتدئ', intermediate: 'متوسط', advanced: 'متقدم', all: 'الجميع' }
-
-  // shared input style for selects / plain inputs inside modal
   const inp = { width: '100%', padding: '10px 13px', background: 'rgba(7,15,28,0.6)', border: '1px solid rgba(223,171,112,0.12)', borderRadius: 11, color: '#fff', fontSize: 13, fontFamily: 'Cairo, sans-serif', outline: 'none' }
 
   return (
     <div>
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 22 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h2 style={{ color: '#fff', fontSize: 19, fontWeight: 900 }}>إدارة الدورات</h2>
+          <h2 style={{ color: '#fff', fontSize: 'clamp(15px, 3vw, 19px)', fontWeight: 900 }}>إدارة الدورات</h2>
           <div style={{ color: 'rgba(223,171,112,0.5)', fontSize: 12, marginTop: 2 }}>{courses.length} دورة</div>
         </div>
-        <GoldBtn onClick={openCreate}><Plus size={14} /> إضافة دورة</GoldBtn>
+        <GoldBtn onClick={openCreate}><Plus size={13} /> إضافة دورة</GoldBtn>
       </div>
 
       {/* Filters */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 18 }}>
-        <div style={{ position: 'relative', flex: '1 1 190px', maxWidth: 300 }}>
-          <Search size={14} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: 'rgba(223,171,112,0.45)' }} />
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="بحث..."
-            style={{ ...inp, paddingRight: 36 }} />
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 16 }}>
+        <div style={{ position: 'relative', flex: '1 1 160px', maxWidth: 280 }}>
+          <Search size={13} style={{ position: 'absolute', right: 11, top: '50%', transform: 'translateY(-50%)', color: 'rgba(223,171,112,0.45)' }} />
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="بحث..." style={{ ...inp, paddingRight: 34 }} />
         </div>
         {[{ v: '', l: 'الكل' }, { v: 'true', l: 'منشور' }, { v: 'false', l: 'مسودة' }].map(f => (
-          <button key={f.v} onClick={() => setFilter(f.v)}
-            style={{
-              padding: '9px 16px', borderRadius: 10, fontSize: 12, fontWeight: 700,
-              cursor: 'pointer', border: '1px solid', fontFamily: 'Cairo, sans-serif', transition: 'all .2s',
-              ...(filter === f.v
-                ? { background: `linear-gradient(135deg,${GD},${G})`, color: NAV, borderColor: 'transparent' }
-                : { background: 'rgba(17,40,71,0.4)', color: 'rgba(255,255,255,0.4)', borderColor: 'rgba(223,171,112,0.1)' }),
-            }}>
-            {f.l}
-          </button>
+          <button key={f.v} onClick={() => setFilter(f.v)} style={{
+            minHeight: 40, padding: '8px 14px', borderRadius: 10, fontSize: 12, fontWeight: 700,
+            cursor: 'pointer', border: '1px solid', fontFamily: 'Cairo, sans-serif', transition: 'all .2s', whiteSpace: 'nowrap',
+            ...(filter === f.v
+              ? { background: `linear-gradient(135deg,${GD},${G})`, color: NAV, borderColor: 'transparent' }
+              : { background: 'rgba(17,40,71,0.4)', color: 'rgba(255,255,255,0.4)', borderColor: 'rgba(223,171,112,0.1)' }),
+          }}>{f.l}</button>
         ))}
       </div>
 
       {/* Table */}
       <Card hover={false} p={0} style={{ overflow: 'hidden' }}>
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 600 }}>
             <thead>
               <tr style={{ background: 'rgba(17,40,71,0.55)', borderBottom: '1px solid rgba(223,171,112,0.1)' }}>
-                {['الدورة', 'الفئة', 'المستوى', 'السعر', 'الترتيب', 'الحالة', 'مميز', 'إجراءات'].map(h => (
-                  <th key={h} style={{ padding: '13px 16px', textAlign: 'right', color: 'rgba(223,171,112,0.7)', fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap' }}>{h}</th>
+                {['الدورة', 'الفئة', 'الحالة', 'مميز', 'إجراءات'].map(h => (
+                  <th key={h} style={{ padding: '12px 14px', textAlign: 'right', color: 'rgba(223,171,112,0.7)', fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap' }}>{h}</th>
                 ))}
               </tr>
             </thead>
@@ -760,9 +832,9 @@ function CoursesPanel() {
               {loading
                 ? Array(4).fill(0).map((_, i) => (
                   <tr key={i} style={{ borderBottom: '1px solid rgba(223,171,112,0.05)' }}>
-                    {Array(8).fill(0).map((_, j) => (
-                      <td key={j} style={{ padding: '13px 16px' }}>
-                        <div style={{ height: 12, borderRadius: 6, background: 'rgba(17,40,71,0.5)', animation: 'pulse 1.5s infinite' }} />
+                    {Array(5).fill(0).map((_, j) => (
+                      <td key={j} style={{ padding: '13px 14px' }}>
+                        <div style={{ height: 12, borderRadius: 6, background: 'rgba(17,40,71,0.5)', animation: 'adminPulse 1.5s infinite' }} />
                       </td>
                     ))}
                   </tr>
@@ -770,90 +842,69 @@ function CoursesPanel() {
                 : courses.length === 0
                   ? (
                     <tr>
-                      <td colSpan={8} style={{ padding: '48px 16px', textAlign: 'center', color: 'rgba(255,255,255,0.25)' }}>
-                        <BookOpen size={36} style={{ color: 'rgba(223,171,112,0.25)', margin: '0 auto 10px', display: 'block' }} />
+                      <td colSpan={5} style={{ padding: '40px 16px', textAlign: 'center', color: 'rgba(255,255,255,0.25)' }}>
+                        <BookOpen size={32} style={{ color: 'rgba(223,171,112,0.22)', margin: '0 auto 8px', display: 'block' }} />
                         لا توجد دورات بعد
                       </td>
                     </tr>
                   )
                   : courses.map(c => (
                     <tr key={c._id}
-                      style={{ borderBottom: '1px solid rgba(223,171,112,0.05)', transition: 'background .18s' }}
+                      style={{ borderBottom: '1px solid rgba(223,171,112,0.05)', transition: 'background .16s' }}
                       onMouseEnter={e => e.currentTarget.style.background = 'rgba(223,171,112,0.03)'}
                       onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                     >
-                      <td style={{ padding: '13px 16px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
+                      <td style={{ padding: '12px 14px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                           {c.thumbnail
-                            ? <img src={c.thumbnail.startsWith('http') ? c.thumbnail : `/api/media/stream/${c.thumbnail}`}
-                              alt="" style={{ width: 42, height: 42, borderRadius: 9, objectFit: 'cover', flexShrink: 0, border: '1px solid rgba(223,171,112,0.15)' }} />
-                            : <div style={{ width: 42, height: 42, borderRadius: 9, flexShrink: 0, background: 'rgba(17,40,71,0.6)', border: '1px solid rgba(223,171,112,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                              <BookOpen size={16} style={{ color: 'rgba(223,171,112,0.35)' }} />
+                            ? <img src={c.thumbnail.startsWith('http') ? c.thumbnail : `https://api.quranei.com/api/media/stream/${c.thumbnail}`} alt="" style={{ width: 38, height: 38, borderRadius: 8, objectFit: 'cover', flexShrink: 0, border: '1px solid rgba(223,171,112,0.15)' }} />
+                            : <div style={{ width: 38, height: 38, borderRadius: 8, flexShrink: 0, background: 'rgba(17,40,71,0.6)', border: '1px solid rgba(223,171,112,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <BookOpen size={14} style={{ color: 'rgba(223,171,112,0.35)' }} />
                             </div>
                           }
-                          <div>
-                            <div style={{ color: '#fff', fontSize: 13, fontWeight: 700, marginBottom: 2 }}>{c.title}</div>
-                            <div style={{ color: 'rgba(255,255,255,0.28)', fontSize: 11 }}>{c.slug}</div>
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ color: '#fff', fontSize: 12, fontWeight: 700, marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 180 }}>{c.title}</div>
+                            <div style={{ color: 'rgba(255,255,255,0.28)', fontSize: 10 }}>{c.slug}</div>
                           </div>
                         </div>
                       </td>
-                      <td style={{ padding: '13px 16px' }}>
-                        <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 9px', borderRadius: 6, background: 'rgba(223,171,112,0.08)', color: G, border: '1px solid rgba(223,171,112,0.15)' }}>
+                      <td style={{ padding: '12px 14px' }}>
+                        <span style={{ fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 5, background: 'rgba(223,171,112,0.08)', color: G, border: '1px solid rgba(223,171,112,0.15)', whiteSpace: 'nowrap' }}>
                           {CAT[c.category] || c.category}
                         </span>
                       </td>
-                      <td style={{ padding: '13px 16px', color: 'rgba(255,255,255,0.4)', fontSize: 12 }}>{LVL[c.level]}</td>
-                      <td style={{ padding: '13px 16px', fontSize: 12 }}>
-                        {c.showPrice && c.price > 0
-                          ? <span style={{ color: G, fontWeight: 700 }}>{c.price} {c.currency}</span>
-                          : c.showPrice && c.pricingType === 'free'
-                            ? <span style={{ color: '#22c55e', fontWeight: 700 }}>مجاني</span>
-                            : <span style={{ color: 'rgba(255,255,255,0.25)' }}>مخفي</span>
-                        }
-                      </td>
-                      <td style={{ padding: '13px 16px', color: '#fff', fontSize: 12 }}>{c.priorityOrder}</td>
-                      <td style={{ padding: '13px 16px' }}>
-                        <button onClick={() => handleToggle(c, 'isPublished')}
-                          style={{
-                            display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 700,
-                            border: '1px solid', borderRadius: 8, padding: '4px 10px', cursor: 'pointer',
-                            fontFamily: 'Cairo, sans-serif', transition: 'all .2s',
-                            ...(c.isPublished
-                              ? { background: 'rgba(34,197,94,0.08)', color: '#22c55e', borderColor: 'rgba(34,197,94,0.22)' }
-                              : { background: 'rgba(239,68,68,0.08)', color: '#ef4444', borderColor: 'rgba(239,68,68,0.22)' }),
-                          }}>
-                          {c.isPublished ? <Eye size={12} /> : <EyeOff size={12} />}
+                      <td style={{ padding: '12px 14px' }}>
+                        <button onClick={() => handleToggle(c, 'isPublished')} style={{
+                          display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, fontWeight: 700,
+                          border: '1px solid', borderRadius: 7, padding: '4px 9px', cursor: 'pointer',
+                          fontFamily: 'Cairo, sans-serif', transition: 'all .2s', whiteSpace: 'nowrap',
+                          minHeight: 32,
+                          ...(c.isPublished
+                            ? { background: 'rgba(34,197,94,0.08)', color: '#22c55e', borderColor: 'rgba(34,197,94,0.22)' }
+                            : { background: 'rgba(239,68,68,0.08)', color: '#ef4444', borderColor: 'rgba(239,68,68,0.22)' }),
+                        }}>
+                          {c.isPublished ? <Eye size={11} /> : <EyeOff size={11} />}
                           {c.isPublished ? 'منشور' : 'مسودة'}
                         </button>
                       </td>
-                      <td style={{ padding: '13px 16px' }}>
-                        <button onClick={() => handleToggle(c, 'featured')}
-                          style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: c.featured ? G : 'rgba(255,255,255,0.15)', fontSize: 17 }}>
-                          {c.featured ? <Star size={16} fill={G} style={{ color: G }} /> : <StarOff size={16} />}
+                      <td style={{ padding: '12px 14px' }}>
+                        <button onClick={() => handleToggle(c, 'featured')} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: c.featured ? G : 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32 }}>
+                          {c.featured ? <Star size={15} fill={G} style={{ color: G }} /> : <StarOff size={15} />}
                         </button>
                       </td>
-                      <td style={{ padding: '13px 16px' }}>
+                      <td style={{ padding: '12px 14px' }}>
                         <div style={{ display: 'flex', gap: 6 }}>
-                          <button onClick={() => openEdit(c)} style={{
-                            width: 30, height: 30, borderRadius: 8, border: '1px solid rgba(223,171,112,0.2)',
-                            background: 'rgba(223,171,112,0.06)', color: G, cursor: 'pointer',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .2s',
-                          }}
-                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(223,171,112,0.14)'}
-                            onMouseLeave={e => e.currentTarget.style.background = 'rgba(223,171,112,0.06)'}
-                          >
-                            <Edit3 size={13} />
-                          </button>
-                          <button onClick={() => handleDelete(c._id)} style={{
-                            width: 30, height: 30, borderRadius: 8, border: '1px solid rgba(239,68,68,0.2)',
-                            background: 'rgba(239,68,68,0.06)', color: '#ef4444', cursor: 'pointer',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .2s',
-                          }}
-                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(239,68,68,0.14)'}
-                            onMouseLeave={e => e.currentTarget.style.background = 'rgba(239,68,68,0.06)'}
-                          >
-                            <Trash2 size={13} />
-                          </button>
+                          {[
+                            { fn: () => openEdit(c), icon: Edit3, col: 'rgba(223,171,112,0.2)', bg: 'rgba(223,171,112,0.06)', hbg: 'rgba(223,171,112,0.14)', tc: G },
+                            { fn: () => handleDelete(c._id), icon: Trash2, col: 'rgba(239,68,68,0.2)', bg: 'rgba(239,68,68,0.06)', hbg: 'rgba(239,68,68,0.14)', tc: '#ef4444' },
+                          ].map(({ fn, icon: Icon, col, bg, hbg, tc }, bi) => (
+                            <button key={bi} onClick={fn} style={{ width: 30, height: 30, borderRadius: 8, border: `1px solid ${col}`, background: bg, color: tc, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .2s' }}
+                              onMouseEnter={e => e.currentTarget.style.background = hbg}
+                              onMouseLeave={e => e.currentTarget.style.background = bg}
+                            >
+                              <Icon size={12} />
+                            </button>
+                          ))}
                         </div>
                       </td>
                     </tr>
@@ -864,85 +915,95 @@ function CoursesPanel() {
       </Card>
 
       {/* Form Modal */}
-      <LuxModal open={showForm} onClose={() => setShowForm(false)} title={editing ? 'تعديل الدورة' : 'إضافة دورة جديدة'} wide>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, direction: 'rtl' }}>
-          {/* Title + Slug */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+      <LuxModal open={showForm} onClose={() => setShowForm(false)} title={editing ? 'تعديل الدورة' : 'إضافة دورة'} wide>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14, direction: 'rtl' }}>
+          <div className="admin-form-grid-2" style={{ gridColumn: '1/-1' }}>
             <div style={{ gridColumn: '1/-1' }}>
               <LuxInput label="عنوان الدورة *" value={form.title}
-                onChange={e => { setF('title', e.target.value); if (!editing) setF('slug', slugify(e.target.value)) }}
-                placeholder="مثال: أحكام التجويد المتقدمة" />
+                onChange={e => { setF('title', e.target.value); if (!editing) setF('slug', slugify(e.target.value)) }} />
             </div>
             <LuxInput label="المعرف (slug)" value={form.slug} onChange={e => setF('slug', e.target.value)} dir="ltr" />
-            <LuxInput label="اسم المعلم" value={form.teacherName} onChange={e => setF('teacherName', e.target.value)} placeholder="الشيخ أحمد..." />
+            <LuxInput label="اسم المعلم" value={form.teacherName} onChange={e => setF('teacherName', e.target.value)} />
           </div>
-
-          <LuxInput label="وصف مختصر" value={form.shortDescription} onChange={e => setF('shortDescription', e.target.value)} rows={2} placeholder="جملتان تلخصان الدورة" />
-          <LuxInput label="وصف تفصيلي" value={form.description} onChange={e => setF('description', e.target.value)} rows={4} placeholder="كل ما يحتاج الطالب معرفته..." />
-
-          {/* Image upload — original component */}
+          <LuxInput label="وصف مختصر" value={form.shortDescription} onChange={e => setF('shortDescription', e.target.value)} rows={2} />
+          <LuxInput label="وصف تفصيلي" value={form.description} onChange={e => setF('description', e.target.value)} rows={3} />
           <ImageUpload label="صورة الدورة" value={form.thumbnail} onChange={v => setF('thumbnail', v)} hint="ارفع صورة الدورة أو الصق رابطها" />
+          <LuxInput label="رابط فيديو يوتيوب" value={form.heroVideo} onChange={e => setF('heroVideo', e.target.value)} dir="ltr" />
 
-          <LuxInput label="رابط فيديو يوتيوب (للمعاينة)" value={form.heroVideo} onChange={e => setF('heroVideo', e.target.value)} dir="ltr" placeholder="https://youtube.com/watch?v=..." />
-
-          {/* Category / Level / Duration / Lessons */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div className="admin-form-grid-2">
             <LuxSelect label="الفئة" value={form.category} onChange={e => setF('category', e.target.value)}>
-              {[['tajweed','التجويد'],['quran','القرآن الكريم'],['memorization','الحفظ'],['recitation','التلاوة'],['ijazah','الإجازة'],['correction','التصحيح'],['arabic','اللغة العربية'],['other','أخرى']].map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+              {[['tajweed', 'التجويد'], ['quran', 'القرآن الكريم'], ['memorization', 'الحفظ'], ['recitation', 'التلاوة'], ['ijazah', 'الإجازة'], ['correction', 'التصحيح'], ['arabic', 'العربية'], ['other', 'أخرى']].map(([v, l]) => <option key={v} value={v}>{l}</option>)}
             </LuxSelect>
             <LuxSelect label="المستوى" value={form.level} onChange={e => setF('level', e.target.value)}>
-              {[['beginner','مبتدئ'],['intermediate','متوسط'],['advanced','متقدم'],['all','الجميع']].map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+              {[['beginner', 'مبتدئ'], ['intermediate', 'متوسط'], ['advanced', 'متقدم'], ['all', 'الجميع']].map(([v, l]) => <option key={v} value={v}>{l}</option>)}
             </LuxSelect>
-            <LuxInput label="المدة" value={form.duration} onChange={e => setF('duration', e.target.value)} placeholder="مثال: 3 أشهر" />
+            <LuxInput label="المدة" value={form.duration} onChange={e => setF('duration', e.target.value)} placeholder="3 أشهر" />
             <LuxInput label="عدد الدروس" value={form.lessonsCount} onChange={e => setF('lessonsCount', +e.target.value)} type="number" />
           </div>
 
-          {/* Pricing section */}
-          <div style={{ padding: '16px', borderRadius: 12, background: 'rgba(7,15,28,0.45)', border: '1px solid rgba(223,171,112,0.09)' }}>
-            <div style={{ color: G, fontSize: 11, fontWeight: 700, marginBottom: 12, letterSpacing: '.5px' }}>إعدادات السعر</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+          <div style={{ padding: 14, borderRadius: 12, background: 'rgba(7,15,28,0.45)', border: '1px solid rgba(223,171,112,0.09)' }}>
+            <div style={{ color: G, fontSize: 11, fontWeight: 700, marginBottom: 10 }}>إعدادات السعر</div>
+            <div className="admin-form-grid-2" style={{ marginBottom: 10 }}>
               <LuxSelect label="نوع التسعير" value={form.pricingType} onChange={e => setF('pricingType', e.target.value)}>
-                {[['free','مجاني'],['paid','مدفوع'],['contact','تواصل للاستفسار']].map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                {[['free', 'مجاني'], ['paid', 'مدفوع'], ['contact', 'تواصل']].map(([v, l]) => <option key={v} value={v}>{l}</option>)}
               </LuxSelect>
               <LuxInput label="السعر" value={form.price} onChange={e => setF('price', +e.target.value)} type="number" disabled={form.pricingType !== 'paid'} />
             </div>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-              <input type="checkbox" checked={form.showPrice} onChange={e => setF('showPrice', e.target.checked)} style={{ accentColor: G }} />
-              <span style={{ color: 'rgba(255,255,255,0.45)', fontSize: 13 }}>إظهار السعر للزوار</span>
-            </label>
           </div>
 
-          {/* WhatsApp / CTA */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            <LuxInput label="رقم واتساب" value={form.whatsapp} onChange={e => setF('whatsapp', e.target.value)} dir="ltr" placeholder="201008148164" />
-            <LuxInput label="نص زر الاشتراك" value={form.ctaText} onChange={e => setF('ctaText', e.target.value)} placeholder="اشترك الآن" />
+          <div className="admin-form-grid-2">
+            <LuxInput label="رقم واتساب" value={form.whatsapp} onChange={e => setF('whatsapp', e.target.value)} dir="ltr" />
+            <LuxInput label="نص زر الاشتراك" value={form.ctaText} onChange={e => setF('ctaText', e.target.value)} />
           </div>
 
-          {/* Array fields */}
-          <LuxInput label="ماذا ستتعلم؟ (سطر لكل نقطة)" value={arrDraft.learningOutcomes} onChange={e => setArrDraft(d => ({ ...d, learningOutcomes: e.target.value }))} rows={3} placeholder="كل سطر = نقطة تعليمية" />
-          <LuxInput label="لمن هذه الدورة؟ (سطر لكل نقطة)" value={arrDraft.targetStudents} onChange={e => setArrDraft(d => ({ ...d, targetStudents: e.target.value }))} rows={2} />
-          <LuxInput label="مميزات الدورة (سطر لكل ميزة)" value={arrDraft.highlights} onChange={e => setArrDraft(d => ({ ...d, highlights: e.target.value }))} rows={2} />
+          <LuxInput label="ماذا ستتعلم؟ (سطر لكل نقطة)" value={arrDraft.learningOutcomes} onChange={e => setArrDraft(d => ({ ...d, learningOutcomes: e.target.value }))} rows={3} />
+          <LuxInput label="لمن هذه الدورة؟" value={arrDraft.targetStudents} onChange={e => setArrDraft(d => ({ ...d, targetStudents: e.target.value }))} rows={2} />
+          <LuxInput label="المميزات" value={arrDraft.highlights} onChange={e => setArrDraft(d => ({ ...d, highlights: e.target.value }))} rows={2} />
 
-          {/* Order + checkboxes */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            <LuxInput label="ترتيب الأولوية (رقم أصغر = أول)" value={form.priorityOrder} onChange={e => setF('priorityOrder', e.target.value)} type="number" />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, justifyContent: 'flex-end' }}>
+          <div className="admin-form-grid-2">
+            <LuxInput label="ترتيب الأولوية" value={form.priorityOrder} onChange={e => setF('priorityOrder', e.target.value)} type="number" />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, justifyContent: 'flex-end' }}>
               {[['isPublished', 'نشر الدورة'], ['featured', 'دورة مميزة'], ['showPrice', 'إظهار السعر']].map(([k, l]) => (
-                <label key={k} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                  <input type="checkbox" checked={!!form[k]} onChange={e => setF(k, e.target.checked)} style={{ accentColor: G }} />
-                  <span style={{ color: 'rgba(255,255,255,0.45)', fontSize: 13 }}>{l}</span>
+                <label key={k} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', minHeight: 28 }}>
+                  <input type="checkbox" checked={!!form[k]} onChange={e => setF(k, e.target.checked)} style={{ accentColor: G, width: 15, height: 15 }} />
+                  <span style={{ color: 'rgba(255,255,255,0.45)', fontSize: 12 }}>{l}</span>
                 </label>
               ))}
             </div>
           </div>
 
-          {/* Footer actions */}
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, paddingTop: 4 }}>
+            <GhostBtn onClick={() => {
+              setForm({
+                ...EMPTY_COURSE,
+                title: 'دورة تجويد القرآن للمبتدئين',
+                slug: `tajweed-test-${Date.now()}`,
+                shortDescription: 'دورة تجريبية لتعلم أحكام التجويد',
+                description: 'هذه دورة تجريبية شاملة لتعلم أحكام التجويد من الصفر حتى الاحتراف',
+                category: 'tajweed',
+                level: 'beginner',
+                teacherName: 'الشيخ أحمد',
+                pricingType: 'contact',
+                whatsapp: '966500000000',
+                ctaText: 'اشترك الآن',
+                duration: '3 أشهر',
+                lessonsCount: 24,
+                isPublished: true,
+                featured: true,
+                priorityOrder: 1,
+              })
+              setArrDraft({
+                learningOutcomes: 'تعلم أحكام النون الساكنة\nتعلم أحكام المد\nتعلم صفات الحروف',
+                targetStudents: 'المبتدئون في تعلم القرآن\nمن يريد تحسين تلاوته',
+                highlights: 'شهادة معتمدة\nمتابعة فردية\nجلسات أونلاين',
+                tags: 'تجويد، قرآن، مبتدئ',
+              })
+            }}>⚡ تعبئة تجريبية</GhostBtn>
             <GhostBtn onClick={() => setShowForm(false)}>إلغاء</GhostBtn>
             <GoldBtn onClick={handleSave} disabled={saving}>
               {saving
-                ? <div style={{ width: 14, height: 14, border: `2px solid ${NAV}55`, borderTopColor: NAV, borderRadius: '50%', animation: 'spin .7s linear infinite' }} />
-                : <Save size={14} />}
+                ? <div style={{ width: 13, height: 13, border: `2px solid ${NAV}55`, borderTopColor: NAV, borderRadius: '50%', animation: 'spin .7s linear infinite' }} />
+                : <Save size={13} />}
               {editing ? 'حفظ التعديلات' : 'إضافة الدورة'}
             </GoldBtn>
           </div>
@@ -952,7 +1013,9 @@ function CoursesPanel() {
   )
 }
 
-// ─── Teachers Panel ───────────────────────────────────────────────────────────
+/* ═══════════════════════════
+   TEACHERS PANEL
+═══════════════════════════ */
 const EMPTY_TEACHER = {
   fullName: '', title: '', gender: 'male', imageUrl: '', bio: '', shortBio: '',
   specialization: '', experience: '', languages: [], nationality: '', whatsapp: '',
@@ -979,7 +1042,7 @@ function TeachersPanel() {
   useEffect(load, [])
 
   const openCreate = () => { setEditing(null); setForm({ ...EMPTY_TEACHER }); setLangDraft(''); setShowForm(true) }
-  const openEdit = (t) => {
+  const openEdit = t => {
     setEditing(t)
     setForm({ ...EMPTY_TEACHER, ...t, socialLinks: { ...EMPTY_TEACHER.socialLinks, ...(t.socialLinks || {}) } })
     setLangDraft(t.languages?.join('، ') || '')
@@ -1002,7 +1065,7 @@ function TeachersPanel() {
     finally { setSaving(false) }
   }
 
-  const handleDelete = async (id) => {
+  const handleDelete = async id => {
     if (!confirm('حذف المعلم؟')) return
     await teacherService.adminDelete(id).then(load)
     qToast.success('تم الحذف')
@@ -1012,67 +1075,68 @@ function TeachersPanel() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 22 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h2 style={{ color: '#fff', fontSize: 19, fontWeight: 900 }}>إدارة المعلمين</h2>
+          <h2 style={{ color: '#fff', fontSize: 'clamp(15px, 3vw, 19px)', fontWeight: 900 }}>إدارة المعلمين</h2>
           <div style={{ color: 'rgba(223,171,112,0.5)', fontSize: 12, marginTop: 2 }}>{teachers.length} معلم</div>
         </div>
-        <GoldBtn onClick={openCreate}><Plus size={14} /> إضافة معلم</GoldBtn>
+        <GoldBtn onClick={openCreate}><Plus size={13} /> إضافة معلم</GoldBtn>
       </div>
 
       {loading ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(270px,1fr))', gap: 14 }}>
+        <div className="admin-teachers-grid">
           {Array(6).fill(0).map((_, i) => (
-            <div key={i} style={{ height: 130, borderRadius: 18, background: 'rgba(17,40,71,0.3)', animation: 'pulse 1.5s infinite' }} />
+            <div key={i} style={{ height: 120, borderRadius: 18, background: 'rgba(17,40,71,0.3)', animation: 'adminPulse 1.5s infinite' }} />
           ))}
         </div>
       ) : teachers.length === 0 ? (
-        <Card p={60} style={{ textAlign: 'center' }}>
-          <GraduationCap size={44} style={{ color: 'rgba(223,171,112,0.2)', margin: '0 auto 12px', display: 'block' }} />
-          <p style={{ color: 'rgba(255,255,255,0.28)' }}>لا يوجد معلمون بعد. أضف أول معلم!</p>
+        <Card p={48} style={{ textAlign: 'center' }}>
+          <GraduationCap size={40} style={{ color: 'rgba(223,171,112,0.2)', margin: '0 auto 10px', display: 'block' }} />
+          <p style={{ color: 'rgba(255,255,255,0.28)' }}>لا يوجد معلمون بعد.</p>
         </Card>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(270px,1fr))', gap: 14 }}>
+        <div className="admin-teachers-grid">
           {teachers.map((t, i) => (
-            <motion.div key={t._id} initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}>
-              <Card p={20}>
-                <div style={{ display: 'flex', gap: 13, marginBottom: 14 }}>
-                  <div style={{
-                    width: 54, height: 54, borderRadius: 13, flexShrink: 0,
-                    border: '1px solid rgba(223,171,112,0.24)', overflow: 'hidden',
-                    background: 'rgba(7,15,28,0.6)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
+            <motion.div key={t._id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07 }}>
+              <Card p={18}>
+                <div style={{ display: 'flex', gap: 12, marginBottom: 14 }}>
+                  <div style={{ width: 50, height: 50, borderRadius: 12, flexShrink: 0, border: '1px solid rgba(223,171,112,0.24)', overflow: 'hidden', background: 'rgba(7,15,28,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     {t.imageUrl || t.imageId
-                      ? <img src={t.imageUrl || `/api/media/stream/${t.imageId}`} alt={t.fullName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      : <span style={{ color: G, fontSize: 22, fontWeight: 900 }}>{t.fullName?.charAt(0)}</span>
+                      ? <img src={t.imageUrl || `https://api.quranei.com/api/media/stream/${t.imageId}`}
+ alt={t.fullName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      : <span style={{ color: G, fontSize: 20, fontWeight: 900 }}>{t.fullName?.charAt(0)}</span>
                     }
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ color: '#fff', fontSize: 14, fontWeight: 800, marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.fullName}</div>
-                    <div style={{ color: G, fontSize: 12, marginBottom: 2 }}>{t.title}</div>
-                    <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11 }}>{t.specialization}</div>
+                    <div style={{ color: '#fff', fontSize: 13, fontWeight: 800, marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.fullName}</div>
+                    <div style={{ color: G, fontSize: 11, marginBottom: 2 }}>{t.title}</div>
+                    <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 10 }}>{t.specialization}</div>
                   </div>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(223,171,112,0.06)', paddingTop: 12 }}>
-                  <div style={{ display: 'flex', gap: 6 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(223,171,112,0.06)', paddingTop: 11 }}>
+                  <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                     <span style={{
-                      fontSize: 11, fontWeight: 700, padding: '3px 9px', borderRadius: 6,
+                      fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 6,
                       ...(t.active
                         ? { background: 'rgba(34,197,94,0.1)', color: '#22c55e', border: '1px solid rgba(34,197,94,0.22)' }
                         : { background: 'rgba(239,68,68,0.1)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.22)' }),
                     }}>
                       {t.active ? 'نشط' : 'مخفي'}
                     </span>
-                    {t.featured && <Star size={14} fill={G} style={{ color: G }} />}
+                    {t.featured && <Star size={13} fill={G} style={{ color: G }} />}
                   </div>
                   <div style={{ display: 'flex', gap: 6 }}>
-                    <button onClick={() => openEdit(t)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid rgba(223,171,112,0.2)', background: 'rgba(223,171,112,0.06)', color: G, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <Edit3 size={13} />
-                    </button>
-                    <button onClick={() => handleDelete(t._id)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid rgba(239,68,68,0.2)', background: 'rgba(239,68,68,0.06)', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <Trash2 size={13} />
-                    </button>
+                    {[
+                      { fn: () => openEdit(t), icon: Edit3, col: 'rgba(223,171,112,0.2)', bg: 'rgba(223,171,112,0.06)', hbg: 'rgba(223,171,112,0.14)', tc: G },
+                      { fn: () => handleDelete(t._id), icon: Trash2, col: 'rgba(239,68,68,0.2)', bg: 'rgba(239,68,68,0.06)', hbg: 'rgba(239,68,68,0.14)', tc: '#ef4444' },
+                    ].map(({ fn, icon: Icon, col, bg, hbg, tc }, bi) => (
+                      <button key={bi} onClick={fn} style={{ width: 30, height: 30, borderRadius: 8, border: `1px solid ${col}`, background: bg, color: tc, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .18s' }}
+                        onMouseEnter={e => e.currentTarget.style.background = hbg}
+                        onMouseLeave={e => e.currentTarget.style.background = bg}
+                      >
+                        <Icon size={12} />
+                      </button>
+                    ))}
                   </div>
                 </div>
               </Card>
@@ -1081,62 +1145,47 @@ function TeachersPanel() {
         </div>
       )}
 
-      {/* Teacher Modal */}
       <LuxModal open={showForm} onClose={() => setShowForm(false)} title={editing ? 'تعديل المعلم' : 'إضافة معلم'}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14, direction: 'rtl' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 13, direction: 'rtl' }}>
+          <div className="admin-form-grid-2">
             <div style={{ gridColumn: '1/-1' }}>
-              <LuxInput label="الاسم الكامل *" value={form.fullName} onChange={e => setF('fullName', e.target.value)} placeholder="الشيخ / الأستاذة..." />
+              <LuxInput label="الاسم الكامل *" value={form.fullName} onChange={e => setF('fullName', e.target.value)} />
             </div>
-            <LuxInput label="اللقب / المسمى الوظيفي" value={form.title} onChange={e => setF('title', e.target.value)} placeholder="مقرئ / معلمة قرآن..." />
+            <LuxInput label="اللقب" value={form.title} onChange={e => setF('title', e.target.value)} />
             <LuxSelect label="الجنس" value={form.gender} onChange={e => setF('gender', e.target.value)}>
               <option value="male">ذكر</option>
               <option value="female">أنثى</option>
             </LuxSelect>
           </div>
-
-          {/* Original ImageUpload component */}
-          <ImageUpload
-            label="صورة المعلم"
-            value={form.imageId || form.imageUrl || ''}
+          <ImageUpload label="صورة المعلم" value={form.imageId || form.imageUrl || ''}
             onChange={v => {
-              if (v && v.match(/^[0-9a-fA-F]{24}$/)) {
-                setForm(f => ({ ...f, imageId: v, imageUrl: '' }))
-              } else {
-                setForm(f => ({ ...f, imageUrl: v, imageId: '' }))
-              }
+              if (v && v.match(/^[0-9a-fA-F]{24}$/)) setForm(f => ({ ...f, imageId: v, imageUrl: '' }))
+              else setForm(f => ({ ...f, imageUrl: v, imageId: '' }))
             }}
             hint="ارفع صورة المعلم أو الصق رابطها"
           />
-
-          <LuxInput label="التخصص" value={form.specialization} onChange={e => setF('specialization', e.target.value)} placeholder="التجويد والقراءات..." />
-          <LuxInput label="النبذة التعريفية القصيرة" value={form.shortBio} onChange={e => setF('shortBio', e.target.value)} />
+          <LuxInput label="التخصص" value={form.specialization} onChange={e => setF('specialization', e.target.value)} />
+          <LuxInput label="النبذة القصيرة" value={form.shortBio} onChange={e => setF('shortBio', e.target.value)} />
           <LuxInput label="السيرة الذاتية" value={form.bio} onChange={e => setF('bio', e.target.value)} rows={3} />
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            <LuxInput label="الخبرة" value={form.experience} onChange={e => setF('experience', e.target.value)} placeholder="15 سنة..." />
-            <LuxInput label="الجنسية" value={form.nationality} onChange={e => setF('nationality', e.target.value)} placeholder="سعودي..." />
-            <LuxInput label="اللغات (مفصولة بفاصلة)" value={langDraft} onChange={e => setLangDraft(e.target.value)} placeholder="العربية، الإنجليزية" />
+          <div className="admin-form-grid-2">
+            <LuxInput label="الخبرة" value={form.experience} onChange={e => setF('experience', e.target.value)} />
+            <LuxInput label="الجنسية" value={form.nationality} onChange={e => setF('nationality', e.target.value)} />
+            <LuxInput label="اللغات (مفصولة بفاصلة)" value={langDraft} onChange={e => setLangDraft(e.target.value)} />
             <LuxInput label="ترتيب العرض" value={form.priorityOrder} onChange={e => setF('priorityOrder', e.target.value)} type="number" />
           </div>
-
           <LuxInput label="رقم واتساب" value={form.whatsapp} onChange={e => setF('whatsapp', e.target.value)} dir="ltr" />
-
-          <div style={{ display: 'flex', gap: 18 }}>
+          <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
             {[['active', 'نشط'], ['featured', 'مميز']].map(([k, l]) => (
-              <label key={k} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                <input type="checkbox" checked={!!form[k]} onChange={e => setF(k, e.target.checked)} style={{ accentColor: G }} />
+              <label key={k} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', minHeight: 32 }}>
+                <input type="checkbox" checked={!!form[k]} onChange={e => setF(k, e.target.checked)} style={{ accentColor: G, width: 15, height: 15 }} />
                 <span style={{ color: 'rgba(255,255,255,0.45)', fontSize: 13 }}>{l}</span>
               </label>
             ))}
           </div>
-
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, paddingTop: 4 }}>
             <GhostBtn onClick={() => setShowForm(false)}>إلغاء</GhostBtn>
             <GoldBtn onClick={handleSave} disabled={saving}>
-              {saving
-                ? <div style={{ width: 14, height: 14, border: `2px solid ${NAV}55`, borderTopColor: NAV, borderRadius: '50%', animation: 'spin .7s linear infinite' }} />
-                : <Save size={14} />}
+              {saving ? <div style={{ width: 13, height: 13, border: `2px solid ${NAV}55`, borderTopColor: NAV, borderRadius: '50%', animation: 'spin .7s linear infinite' }} /> : <Save size={13} />}
               حفظ
             </GoldBtn>
           </div>
@@ -1146,34 +1195,34 @@ function TeachersPanel() {
   )
 }
 
-// ─── Students Placeholder ─────────────────────────────────────────────────────
 function StudentsPanel() {
   return (
-    <Card p={60} style={{ textAlign: 'center' }}>
-      <Users size={48} style={{ color: 'rgba(223,171,112,0.18)', margin: '0 auto 16px', display: 'block' }} />
-      <h3 style={{ color: '#fff', fontSize: 19, fontWeight: 900, marginBottom: 8 }}>إدارة الطلاب</h3>
-      <p style={{ color: 'rgba(255,255,255,0.28)', fontSize: 14 }}>قريباً — نظام متكامل لإدارة بيانات الطلاب والاشتراكات</p>
+    <Card p={48} style={{ textAlign: 'center' }}>
+      <Users size={44} style={{ color: 'rgba(223,171,112,0.18)', margin: '0 auto 14px', display: 'block' }} />
+      <h3 style={{ color: '#fff', fontSize: 18, fontWeight: 900, marginBottom: 6 }}>إدارة الطلاب</h3>
+      <p style={{ color: 'rgba(255,255,255,0.28)', fontSize: 13 }}>قريباً — نظام متكامل لإدارة بيانات الطلاب</p>
     </Card>
   )
 }
 
-// ─── Settings Placeholder ─────────────────────────────────────────────────────
 function SettingsPanel() {
   return (
-    <Card p={60} style={{ textAlign: 'center' }}>
-      <Settings size={48} style={{ color: 'rgba(223,171,112,0.18)', margin: '0 auto 16px', display: 'block' }} />
-      <h3 style={{ color: '#fff', fontSize: 19, fontWeight: 900, marginBottom: 8 }}>إعدادات المنصة</h3>
-      <p style={{ color: 'rgba(255,255,255,0.28)', fontSize: 14 }}>قريباً — إعدادات عامة للمنصة</p>
+    <Card p={48} style={{ textAlign: 'center' }}>
+      <Settings size={44} style={{ color: 'rgba(223,171,112,0.18)', margin: '0 auto 14px', display: 'block' }} />
+      <h3 style={{ color: '#fff', fontSize: 18, fontWeight: 900, marginBottom: 6 }}>إعدادات المنصة</h3>
+      <p style={{ color: 'rgba(255,255,255,0.28)', fontSize: 13 }}>قريباً — إعدادات عامة للمنصة</p>
     </Card>
   )
 }
 
-// ─── Root ─────────────────────────────────────────────────────────────────────
+/* ═══════════════════════════
+   ROOT
+═══════════════════════════ */
 export default function AdminDashboard() {
   const [active, setActive] = useState('overview')
 
   const renderPanel = () => {
-    if (active === 'courses')  return <CoursesPanel />
+    if (active === 'courses') return <CoursesPanel />
     if (active === 'teachers') return <TeachersPanel />
     if (active === 'students') return <StudentsPanel />
     if (active === 'settings') return <SettingsPanel />
@@ -1181,20 +1230,8 @@ export default function AdminDashboard() {
   }
 
   return (
-    <>
-      <style>{`
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes pulse { 0%,100%{opacity:.4} 50%{opacity:.7} }
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-track { background: #040816; }
-        ::-webkit-scrollbar-thumb { background: #906130; border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: #dfab70; }
-        ::selection { background: rgba(223,171,112,0.28); color: #dfab70; }
-        option { background: #08111f; color: #fff; }
-      `}</style>
-      <AdminShell active={active} setActive={setActive}>
-        {renderPanel()}
-      </AdminShell>
-    </>
+    <AdminShell active={active} setActive={setActive}>
+      {renderPanel()}
+    </AdminShell>
   )
 }

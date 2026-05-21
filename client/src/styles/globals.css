@@ -279,3 +279,34 @@
     order: -1;
   }
 }
+/* موبايل فقط */
+/* Desktop */
+.hero-mobile-break {
+  display: none;
+}
+
+/* Mobile only */
+@media (min-width: 300px) and (max-width: 480px) {
+
+  .hero-mobile-break {
+    display: block;
+  }
+
+  .hero-line-2 {
+    display: inline-block;
+    margin-top: -8px;
+    padding-right: 120px;
+  }
+}
+
+/* Programs grid responsive */
+.programs-grid {
+  width: 100%;
+}
+
+@media (max-width: 900px) {
+  .programs-grid {
+    grid-template-columns: 1fr !important;
+    gap: 18px !important;
+  }
+}

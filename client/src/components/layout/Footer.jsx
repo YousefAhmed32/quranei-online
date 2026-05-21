@@ -559,7 +559,7 @@ const socialLinks = [
           margin: '0 0 2px',
         }}
       >
-        QURANI ONLINE
+        Qurani Online
       </p>
 
       <p

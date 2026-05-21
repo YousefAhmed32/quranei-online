@@ -126,7 +126,7 @@ export default function CoursePreviewPage() {
   )
 
   const imgSrc = course.thumbnail
-    ? (course.thumbnail.startsWith('http') ? course.thumbnail : `/api/media/stream/${course.thumbnail}`)
+    ? (course.thumbnail.startsWith('http') ? course.thumbnail : `https://api.quranei.com/api/media/stream/${course.thumbnail}`)
     : null
 
   return (

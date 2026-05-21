@@ -56,7 +56,7 @@ export default function TeacherProfilePage() {
   )
 
   const imgSrc = teacher.imageId
-    ? `/api/media/stream/${teacher.imageId}`
+    ? `https://api.quranei.com/api/media/stream/${teacher.imageId}`
     : teacher.imageUrl || ''
 
   const socials = [
@@ -161,7 +161,7 @@ export default function TeacherProfilePage() {
                         onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(223,171,112,0.25)'}
                         onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(223,171,112,0.08)'}>
                         {c.thumbnail ? (
-                          <img src={c.thumbnail.startsWith('http') ? c.thumbnail : `/api/media/stream/${c.thumbnail}`}
+                          <img src={c.thumbnail.startsWith('http') ? c.thumbnail : `https://api.quranei.com/api/media/stream/${c.thumbnail}`}
                             alt="" className="w-12 h-12 rounded-lg object-cover flex-shrink-0" />
                         ) : (
                           <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0"

@@ -369,7 +369,7 @@ export default function StudentDashboard() {
         letterSpacing: 1,
       }}
     >
-      QURANI
+      Qurani
     </div>
 
     <div

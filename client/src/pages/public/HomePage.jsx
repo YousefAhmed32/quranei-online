@@ -8,11 +8,14 @@ import PricingSection from '../../components/dashboard/PricingSection'
 export default function HomePage() {
   return (
     <PublicLayout>
-      <HeroSection />
-      <AboutSection />
-      <ProgramsSection />
-      <TestimonialsSection />
-      <PricingSection />
+      {/* overflow-x guard prevents particle/absolute bleed on all viewports */}
+      <div style={{ overflowX: 'hidden', width: '100%' }}>
+        <HeroSection />
+        <AboutSection />
+        <ProgramsSection />
+        <TestimonialsSection />
+        <PricingSection />
+      </div>
     </PublicLayout>
   )
 }

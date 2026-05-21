@@ -4,6 +4,7 @@ import { Toaster } from 'react-hot-toast';
 import { ProtectedRoute, GuestRoute } from './components/auth/ProtectedRoute';
 import AIAssistant from './components/ai/AIAssistant';
 import FloatingWhatsApp from './components/ui/FloatingWhatsApp';
+import ScrollToTop from "./components/ScrollToTop";
 
 // Public pages
 import HomePage           from './pages/public/HomePage';
@@ -38,6 +39,7 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
+       <ScrollToTop />
         <Routes>
           {/* Public */}
           <Route path="/"                     element={<HomePage />} />

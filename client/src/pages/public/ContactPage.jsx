@@ -28,8 +28,8 @@ export default function ContactPage() {
             <div className="space-y-5">
               {[
                 { icon: '💬', title: 'واتساب', desc: 'للتسجيل والاستفسارات السريعة', action: `https://wa.me/${WHATSAPP}`, label: 'تواصل عبر واتساب', color: 'emerald' },
-                { icon: '📧', title: 'البريد الإلكتروني', desc: 'info@qurani.online', action: 'mailto:info@qurani.online', label: 'أرسل بريداً', color: 'blue' },
-                { icon: '📱', title: 'الهاتف', desc: '+966 50 000 0000', action: `tel:+${WHATSAPP}`, label: 'اتصل بنا', color: 'yellow' },
+                { icon: '📧', title: 'البريد الإلكتروني', desc: 'qurani.online92@gmail.com', action: 'mailto:info@qurani.online', label: 'أرسل بريداً', color: 'blue' },
+                { icon: '📱', title: 'الهاتف', desc: '+201008148164', action: `tel:+${WHATSAPP}`, label: 'اتصل بنا', color: 'yellow' },
               ].map((c, i) => (
                 <motion.a key={i} href={c.action} target="_blank" rel="noreferrer"
                   initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.1 }}
