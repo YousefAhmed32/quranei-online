@@ -40,11 +40,11 @@ router.get("/featured", async (req, res) => {
 // ── Admin ──────────────────────────────────────────────────────────────────────
 router.get("/admin/all", protect, adminOnly, async (req, res) => {
   try {
-    const { search, category, isActive } = req.query;
+    const { search, category, isPublished } = req.query;  // ← غيّر isActive لـ isPublished
     const filter = {};
     if (category) filter.category = category;
-    if (isActive === "true") filter.isActive = true;
-    if (isActive === "false") filter.isActive = false;
+    if (isPublished === "true")  filter.isPublished = true;   // ← إضافة
+    if (isPublished === "false") filter.isPublished = false;  // ← إضافة
     if (search) filter.title = { $regex: search, $options: "i" };
     const courses = await Course.find(filter)
       .sort({ priorityOrder: 1, createdAt: -1 })

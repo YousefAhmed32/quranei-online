@@ -86,7 +86,7 @@ export default function CoursesPage() {
                 </span>
                 <div className="flex items-center gap-1">
                   <span className={`w-2 h-2 rounded-full ${course.isPublished ? 'bg-emerald-400' : 'bg-gray-500'}`} />
-                  <span className="text-xs text-[#5e779a]">{course.isPublished ? 'منشور' : 'مسودة'}</span>
+                  <span className="text-xs text-[#5e779a]">{course.isPublished ? 'منشور' : 'مسودة'}874984654984984984984</span>
                 </div>
               </div>
               <h3 className="text-white font-bold text-lg mb-2 leading-tight">{course.title}</h3>

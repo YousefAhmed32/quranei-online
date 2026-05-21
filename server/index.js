@@ -1,7 +1,8 @@
-// server/index.js — Qurani Online Platform v2.0
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
 "use strict";
 
 const express    = require("express");
+
 const cors       = require("cors");
 const helmet     = require("helmet");
 const morgan     = require("morgan");
@@ -25,6 +26,7 @@ const aiRoutes            = require("./routes/ai");
 
 // ─── App Setup ────────────────────────────────────────────────────────────────
 const app = express();
+app.set('trust proxy', 1);
 
 // Security headers
 app.use(helmet({
@@ -39,8 +41,8 @@ app.use(cors({
 }));
 
 // Body parsers
-app.use(express.json({ limit: "10mb" }));
-app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
 // Logging (dev only)
 if (process.env.NODE_ENV !== "production") {
@@ -97,3 +99,5 @@ connectDB().then(() => {
     console.log(`🤖 AI:  http://localhost:${PORT}/api/ai/chat\n`);
   });
 });
+
+
