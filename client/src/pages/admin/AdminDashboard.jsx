@@ -722,7 +722,6 @@ const EMPTY_COURSE = {
   learningOutcomes: [], targetStudents: [], highlights: [], tags: [],
 }
 
-if (active === 'courses') return <CoursesPanel />
 
 
 /* ═══════════════════════════

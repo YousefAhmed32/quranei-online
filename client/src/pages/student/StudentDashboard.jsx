@@ -278,7 +278,7 @@ function LogoutConfirm({ onClose, onConfirm }) {
         </p>
         <div style={{ display: 'flex', gap: 10 }}>
           <button onClick={onConfirm} style={{
-            flex: 1, padding: '11px', borderRadius: 11, border: 'none', cursor: 'pointer',
+            flex: 1, padding: '11px', borderRadius: 11, cursor: 'pointer',
             background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)',
             color: '#ef4444', fontWeight: 700, fontSize: 14, fontFamily: 'inherit',
           }}>نعم، خروج</button>
