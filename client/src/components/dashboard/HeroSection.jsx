@@ -215,7 +215,7 @@ function SplashScreen({ audioRef, onEnter }) {
               lineHeight: 1.3,
             }}
           >
-            قـرآني online …
+            قـرآني Online …
           </motion.h2>
         )}
       </AnimatePresence>
@@ -231,62 +231,50 @@ function SplashScreen({ audioRef, onEnter }) {
             className="relative z-10 mt-8 flex items-center gap-3 flex-wrap justify-center"
             style={{ width: "100%", maxWidth: 360 }}
           >
-            {/* Audio toggle */}
-            <button
-              onClick={toggleAudio}
-              className="flex items-center gap-2.5 rounded-full transition-all duration-300"
-              style={{
-                minHeight: 44,
-                padding: "10px 20px",
-                border: `1px solid rgba(201,149,74,${muted ? "0.15" : "0.35"})`,
-                background: "transparent",
-                color: muted ? "rgba(255,255,255,0.28)" : GOLD_LIGHT,
-                fontFamily: "'Cairo', sans-serif",
-                fontSize: "clamp(11px, 2.5vw, 13px)",
-                cursor: "pointer",
-                whiteSpace: "nowrap",
-              }}
-            >
-              <span style={{
-                width: 7, height: 7, borderRadius: "50%", flexShrink: 0,
-                display: "inline-block",
-                background: muted ? "rgba(255,255,255,0.18)" : GOLD,
-                boxShadow: muted ? "none" : `0 0 8px ${GOLD}`,
-                animation: muted ? "none" : "goldPulse 2.5s ease-in-out infinite",
-              }} />
-              {muted ? "التلاوة مكتومة" : "التلاوة تعمل"}
-            </button>
+         
 
             {/* Enter */}
-            <button
-              onClick={handleEnter}
-              className="flex items-center gap-2.5 rounded-full font-bold transition-all duration-200"
-              style={{
-                minHeight: 44,
-                padding: "12px 28px",
-                background: `linear-gradient(135deg, ${GOLD} 0%, ${GOLD_LIGHT} 60%, ${GOLD_PALE} 100%)`,
-                color: NAVY_DEEP,
-                fontFamily: "'Cairo', sans-serif",
-                fontSize: "clamp(12px, 2.5vw, 14px)",
-                border: "none",
-                cursor: "pointer",
-                boxShadow: `0 6px 24px rgba(201,149,74,0.4)`,
-                whiteSpace: "nowrap",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = "translateY(-2px)";
-                e.currentTarget.style.boxShadow = `0 12px 36px rgba(201,149,74,0.58)`;
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "translateY(0)";
-                e.currentTarget.style.boxShadow = `0 6px 24px rgba(201,149,74,0.4)`;
-              }}
-            >
-       ابدأ الرحلة
-              <svg width="14" height="12" viewBox="0 0 16 14" fill="none" aria-hidden>
-                <path d="M11 1L1 7L11 13M1 7H15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
+            {/* Enter */}
+<button
+  onClick={handleEnter}
+  className="flex items-center justify-center gap-3 rounded-full font-bold transition-all duration-200"
+  style={{
+    minHeight: 60,
+    width: "min(92vw, 520px)",
+    padding: "16px 40px",
+    background: `linear-gradient(135deg, ${GOLD} 0%, ${GOLD_LIGHT} 60%, ${GOLD_PALE} 100%)`,
+    color: NAVY_DEEP,
+    fontFamily: "'Cairo', sans-serif",
+    fontSize: "clamp(15px, 3vw, 18px)",
+    border: "none",
+    cursor: "pointer",
+    boxShadow: `0 10px 34px rgba(201,149,74,0.42)`,
+    whiteSpace: "nowrap",
+    borderRadius: "999px",
+    fontWeight: 800,
+    letterSpacing: "0.3px",
+  }}
+  onMouseEnter={(e) => {
+    e.currentTarget.style.transform = "translateY(-3px) scale(1.01)";
+    e.currentTarget.style.boxShadow = `0 16px 44px rgba(201,149,74,0.58)`;
+  }}
+  onMouseLeave={(e) => {
+    e.currentTarget.style.transform = "translateY(0) scale(1)";
+    e.currentTarget.style.boxShadow = `0 10px 34px rgba(201,149,74,0.42)`;
+  }}
+>
+  ابدأ رحلتك للارتباط بالقرآن
+
+  <svg width="16" height="14" viewBox="0 0 16 14" fill="none" aria-hidden>
+    <path
+      d="M11 1L1 7L11 13M1 7H15"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+</button>
           </motion.div>
         )}
       </AnimatePresence>
