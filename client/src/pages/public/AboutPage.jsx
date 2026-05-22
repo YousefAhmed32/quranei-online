@@ -65,11 +65,11 @@ export default function AboutPage() {
           <div className="container mx-auto px-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               {[
-                {icon:Users,  value:'٢٠٬٠٠٠+', label:'متعلّمٌ من شتّى أصقاع المعمورة'},
-                {icon:BookOpen, value:'٥٠+',   label:'برنامجٌ قرآنيٌّ متخصص'},
-                {icon:Star,   value:'٩٨٪',      label:'من المتعلّمين أتمّوا مساراتهم بتميّز'},
-                {icon:Globe,  value:'٤٠+',      label:'دولةٌ تضمّ طلابَ الأكاديمية'},
-              ].map((s,i) => (
+               {icon:Users,  value:'5,000+', label:'متعلّمٌ من شتّى أصقاع المعمورة'},
+{icon:BookOpen, value:'50+',   label:'برنامجٌ قرآنيٌّ متخصص'},
+{icon:Star,   value:'98%',      label:'من المتعلّمين أتمّوا مساراتهم بتميّز'},
+{icon:Globe,  value:'40+',      label:'دولةٌ تضمّ طلابَ الأكاديمية'},
+  ].map((s,i) => (
                 <motion.div key={i} initial={{opacity:0,y:20}} whileInView={{opacity:1,y:0}} transition={{delay:i*.1}} viewport={{once:true}}
                   className="glass-card p-6 text-center">
                   <s.icon className="w-8 h-8 mx-auto mb-3" style={{color:G}} />

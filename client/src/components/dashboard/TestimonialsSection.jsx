@@ -71,7 +71,7 @@ const WHATSAPP_TESTIMONIALS = [
 
 const STATS = [
   {
-    num: "+٢٥K", label: "طالب حول العالم",
+    num: "+٥K", label: "طالب حول العالم",
     icon: <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" stroke="currentColor" strokeWidth="1.4" fill="none" strokeLinecap="round" />,
   },
   {

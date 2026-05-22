@@ -460,7 +460,7 @@ export default function RegisterPage() {
                 onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="+966 5x xxx xxxx" error={errors.phone} />
             </div>
 
-            <GoldInput label="كلمة المرور" icon={<Lock size={15} />} type={showPw ? 'text' : 'password'} value={form.password}
+            <GoldInput label="كلمة المرور....." icon={<Lock size={15} />} type={showPw ? 'text' : 'password'} value={form.password}
               onChange={e => setForm({ ...form, password: e.target.value })} placeholder="••••••••" error={errors.password}
               extra={
                 <button type="button" onClick={() => setShowPw(!showPw)}
