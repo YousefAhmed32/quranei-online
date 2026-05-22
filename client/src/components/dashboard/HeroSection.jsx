@@ -282,7 +282,7 @@ function SplashScreen({ audioRef, onEnter }) {
                 e.currentTarget.style.boxShadow = `0 6px 24px rgba(201,149,74,0.4)`;
               }}
             >
-              ادخل إلى التجربة
+       ابدأ الرحلة
               <svg width="14" height="12" viewBox="0 0 16 14" fill="none" aria-hidden>
                 <path d="M11 1L1 7L11 13M1 7H15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
