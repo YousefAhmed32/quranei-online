@@ -85,4 +85,4 @@ CourseSchema.pre('findOneAndUpdate', function(next) {
   next();
 });
 
-module.exports = mongoose.model('Course', CourseSchema);
+module.exports = mongoose.model('Course', CourseSchema);  
