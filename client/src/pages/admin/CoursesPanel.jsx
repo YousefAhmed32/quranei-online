@@ -207,7 +207,7 @@ function ChipInput({ label, values = [], onChange, placeholder }) {
             fontFamily: 'Cairo, sans-serif', outline: 'none', direction: 'rtl',
           }}
         />
-        <button onClick={add} style={{
+        <button type="button" onClick={add} style={{
           padding: '9px 14px', borderRadius: 10, border: 'none',
           background: `rgba(223,171,112,0.12)`, color: G,
           fontFamily: 'Cairo, sans-serif', fontSize: 12, cursor: 'pointer',
@@ -223,7 +223,7 @@ function ChipInput({ label, values = [], onChange, placeholder }) {
               color: G, fontSize: 11,
             }}>
               {v}
-              <button onClick={() => remove(i)} style={{
+             <button type="button" onClick={() => remove(i)} style={{
                 background: 'none', border: 'none', color: 'rgba(223,171,112,0.5)',
                 cursor: 'pointer', padding: 0, display: 'flex', lineHeight: 1,
               }}>×</button>
@@ -573,14 +573,30 @@ export default function CoursesPanel() {
             <motion.div key={c._id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
               <Card p={16}>
                 {/* thumbnail */}
-                {c.thumbnail && (
-                  <div style={{
-                    width: '100%', height: 110, borderRadius: 10, marginBottom: 12,
-                    overflow: 'hidden', background: 'rgba(7,15,28,0.6)',
-                  }}>
-                    <img src={c.thumbnail} alt={c.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  </div>
-                )}
+              {(c.thumbnail || c.thumbnailId) && (
+  <div style={{
+    width: '100%',
+    height: 110,
+    borderRadius: 10,
+    marginBottom: 12,
+    overflow: 'hidden',
+    background: 'rgba(7,15,28,0.6)',
+  }}>
+    <img
+      src={
+        c.thumbnail?.startsWith('http')
+          ? c.thumbnail
+          : `https://api.quranei.com/api/media/stream/${c.thumbnail || c.thumbnailId}`
+      }
+      alt={c.title}
+      style={{
+        width: '100%',
+        height: '100%',
+        objectFit: 'cover'
+      }}
+    />
+  </div>
+)}
 
                 {/* title + category */}
                 <div style={{ marginBottom: 10 }}>
@@ -697,11 +713,25 @@ export default function CoursesPanel() {
           <FormSection title="الوسائط">
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <ImageUpload
-                label="صورة الغلاف"
-                value={form.thumbnail}
-                onChange={v => setF('thumbnail', v || '')}
-                hint="ارفع صورة أو الصق رابطاً — اختياري"
-              />
+  label="صورة الغلاف"
+  value={form.thumbnail || form.thumbnailId || ''}
+  onChange={v => {
+    if (v && v.match(/^[0-9a-fA-F]{24}$/)) {
+      setForm(f => ({
+        ...f,
+        thumbnailId: v,
+        thumbnail: '',
+      }))
+    } else {
+      setForm(f => ({
+        ...f,
+        thumbnail: v || '',
+        thumbnailId: '',
+      }))
+    }
+  }}
+  hint="ارفع صورة أو الصق رابطاً — اختياري"
+/>
               <LuxInput
                 label="رابط الفيديو التعريفي"
                 value={form.heroVideo}
