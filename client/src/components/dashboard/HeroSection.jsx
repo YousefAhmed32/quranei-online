@@ -563,13 +563,13 @@ export default function HeroSection() {
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
-    const alreadyPlayed = sessionStorage.getItem("hero_audio_played");
-    if (alreadyPlayed) return;
+    // const alreadyPlayed = sessionStorage.getItem("hero_audio_played");
+    // if (alreadyPlayed) return;
     const startAudio = async () => {
       try {
         audio.volume = 0.65;
         await audio.play();
-        sessionStorage.setItem("hero_audio_played", "true");
+        // sessionStorage.setItem("hero_audio_played", "true");
       } catch {}
     };
     window.addEventListener("pointermove", startAudio, { once: true });
