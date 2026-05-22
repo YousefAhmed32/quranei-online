@@ -84,6 +84,7 @@ function LuxInput({ label, value, onChange, placeholder, type = 'text', rows, di
     <div>
       {label && <div style={{ color: G, fontSize: 11, fontWeight: 700, marginBottom: 5 }}>{label}</div>}
       <Tag
+        autoComplete="off"
         value={value ?? ''} onChange={onChange} placeholder={placeholder}
         type={type} rows={rows} disabled={disabled}
         onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
@@ -135,8 +136,9 @@ function LuxModal({ open, onClose, title, children, wide }) {
             overflowY: 'auto', padding: 'clamp(16px,5vw,40px) clamp(12px,4vw,20px)',
           }}
         >
-          <motion.div
-            initial={{ scale: 0.9, y: 24 }} animate={{ scale: 1, y: 0 }}
+        <motion.div
+  initial={false}
+  animate={{ scale: 1, y: 0 }}
             exit={{ scale: 0.9, y: 24 }}
             transition={{ ease: [0.22, 1, 0.36, 1], duration: 0.35 }}
             style={{
@@ -168,7 +170,8 @@ function LuxModal({ open, onClose, title, children, wide }) {
             {/* body */}
             <div style={{
               padding: 'clamp(16px,3.5vw,24px)',
-              maxHeight: 'calc(100dvh - 140px)', overflowY: 'auto',
+              maxHeight: 'calc(100dvh - 140px)',overflowY: 'scroll',
+overscrollBehavior: 'contain',
             }}>
               {children}
             </div>
@@ -276,6 +279,21 @@ const EMPTY = {
 /* ════════════════════════════════════════════
    COURSES PANEL
 ════════════════════════════════════════════ */
+   const FormSection = ({ title: t, children }) => (
+    <div style={{ marginBottom: 4 }}>
+      <div style={{
+        color: 'rgba(223,171,112,0.6)', fontSize: 10, fontWeight: 800,
+        letterSpacing: '1.5px', marginBottom: 10, marginTop: 6,
+        textTransform: 'uppercase', borderBottom: '1px solid rgba(223,171,112,0.08)',
+        paddingBottom: 6,
+      }}>{t}</div>
+      {children}
+    </div>
+  )
+
+  const grid2 = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: 12 }
+
+
 export default function CoursesPanel() {
   const [courses,  setCourses]  = useState([])
   const [teachers, setTeachers] = useState([])
@@ -322,6 +340,9 @@ export default function CoursesPanel() {
     merged.teacher = course.teacher?._id || course.teacher || ''
     return merged
   }
+
+
+  
 
   /* ── open create ── */
   const openCreate = () => {
@@ -476,19 +497,8 @@ export default function CoursesPanel() {
   /* ════════════════════
      FORM SECTIONS
   ════════════════════ */
-  const FormSection = ({ title: t, children }) => (
-    <div style={{ marginBottom: 4 }}>
-      <div style={{
-        color: 'rgba(223,171,112,0.6)', fontSize: 10, fontWeight: 800,
-        letterSpacing: '1.5px', marginBottom: 10, marginTop: 6,
-        textTransform: 'uppercase', borderBottom: '1px solid rgba(223,171,112,0.08)',
-        paddingBottom: 6,
-      }}>{t}</div>
-      {children}
-    </div>
-  )
+ 
 
-  const grid2 = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: 12 }
 
   /* ════════════════════
      RENDER
@@ -671,8 +681,18 @@ export default function CoursesPanel() {
         title={editing ? `تعديل: ${editing.title}` : 'إضافة دورة جديدة'}
         wide
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, direction: 'rtl' }}>
-
+<form
+  onSubmit={(e) => {
+    e.preventDefault()
+    handleSave()
+  }}
+  style={{
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 16,
+    direction: 'rtl'
+  }}
+>
           {/* ── Basic ── */}
           <FormSection title="المعلومات الأساسية">
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -864,7 +884,9 @@ export default function CoursesPanel() {
               {saving ? 'جارٍ الحفظ...' : (editing ? 'حفظ التعديلات' : 'إضافة الدورة')}
             </GoldBtn>
           </div>
-        </div>
+        </form>
+
+
       </LuxModal>
     </div>
   )
