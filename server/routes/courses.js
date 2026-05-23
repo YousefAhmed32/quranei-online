@@ -43,6 +43,19 @@ function sanitizeCourse(body) {
     if (!Array.isArray(data[f])) data[f] = [];
   });
 
+  // ✅ Multi-category support — backward compatible
+  if (Array.isArray(data.categories)) {
+    // Clean: keep only non-empty strings
+    data.categories = data.categories.filter(c => typeof c === 'string' && c.trim());
+    // Sync legacy `category` field to the first selected category
+    if (data.categories.length > 0) {
+      data.category = data.categories[0];
+    }
+  } else {
+    // Legacy path: only `category` provided — derive categories array from it
+    data.categories = data.category ? [data.category] : [];
+  }
+
   return data;
 }
 
@@ -52,9 +65,16 @@ router.get("/", async (req, res) => {
     const { search, category, level } = req.query;
     const filter = { isPublished: true };
 
-    if (category) filter.category = category;
-    if (level)    filter.level    = level;
-    if (search)   filter.title    = { $regex: search, $options: "i" };
+    // ✅ Backward-compatible category filter:
+    //    Matches docs with the new `categories` array OR the legacy `category` field.
+    if (category) {
+      filter.$or = [
+        { categories: category },   // new multi-cat documents
+        { category:   category },   // legacy single-cat documents
+      ];
+    }
+    if (level)    filter.level = level;
+    if (search)   filter.title = { $regex: search, $options: "i" };
 
     const courses = await Course.find(filter)
       .sort({ featured: -1, priorityOrder: 1, createdAt: -1 })
@@ -83,7 +103,13 @@ router.get("/admin/all", protect, adminOnly, async (req, res) => {
     const { search, category, isPublished } = req.query;
     const filter = {};
 
-    if (category)           filter.category    = category;
+    // ✅ Same backward-compatible category filter as the public route
+    if (category) {
+      filter.$or = [
+        { categories: category },
+        { category:   category },
+      ];
+    }
     if (isPublished === "true")  filter.isPublished = true;
     if (isPublished === "false") filter.isPublished = false;
     if (search) filter.title = { $regex: search, $options: "i" };

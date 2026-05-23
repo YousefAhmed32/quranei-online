@@ -5,37 +5,23 @@ import { Search, BookOpen, Clock, Star, MessageCircle, Sparkles, Eye, Users, Che
 import PublicLayout from '../../components/layout/PublicLayout'
 import { courseService } from '../../services/api'
 import { useSearchParams } from 'react-router-dom'
+import { COURSE_CATEGORIES, CAT_AR, getCourseCategories, getPrimaryLabel } from '../../constants/courseCategories'
+
 /* ─── Design tokens ─── */
-  
 const GOLD = '#D6A85F'
 const GOLD_LIGHT = '#F3D29A'
-
 const GOLD_DIM = 'rgba(214,168,95,0.14)'
-
 const GOLD_GLOW = 'rgba(214,168,95,0.22)'
-
 const NAVY_DEEP = '#07111F'
-
 const NAVY_CARD = '#0D1B2D'
-
 const NAVY_SOFT = '#13243A'
-
 const BRONZE = '#9B6B34'
+const LUX_SHADOW = '0 20px 60px rgba(0,0,0,0.55)'
 
-const LUX_SHADOW =
-  '0 20px 60px rgba(0,0,0,0.55)'
-
-
-
-/* ─── Static data ─── */
+/* ─── Static data — built from unified constants ─── */
 const CATS = [
   { key: '', label: 'الكل' },
-  { key: 'tajweed', label: 'التجويد' },
-  { key: 'memorization', label: 'الحفظ' },
-  { key: 'recitation', label: 'التلاوة' },
-  { key: 'ijazah', label: 'الإجازة' },
-  { key: 'correction', label: 'التصحيح' },
-  { key: 'arabic', label: 'العربية' },
+  ...COURSE_CATEGORIES.map(c => ({ key: c.key, label: c.label })),
 ]
 const LEVELS = [
   { key: '', label: 'جميع المستويات' },
@@ -43,11 +29,6 @@ const LEVELS = [
   { key: 'intermediate', label: 'متوسط' },
   { key: 'advanced', label: 'متقدم' },
 ]
-const CAT_AR = {
-  tajweed: 'التجويد', quran: 'القرآن', memorization: 'الحفظ',
-  recitation: 'التلاوة', ijazah: 'الإجازة', correction: 'التصحيح',
-  arabic: 'العربية', other: 'أخرى',
-}
 const LVL_AR = { beginner: 'مبتدئ', intermediate: 'متوسط', advanced: 'متقدم', all: 'الجميع' }
 const LVL_PILL = {
   beginner: { bg: 'rgba(74,222,128,0.12)', color: '#4ade80' },
@@ -226,18 +207,19 @@ function CourseCard({ course, index }) {
               </div>
             )}
 
-            {/* category badge */}
-            <div
-              className="absolute bottom-3 right-3 px-2.5 py-1 rounded-lg text-xs font-bold"
-              style={{
-                background: 'rgba(9,21,37,0.82)',
-                border:
-                  '1px solid rgba(201,147,74,0.18)',
-                color: GOLD
-              }}
-            >
-              {CAT_AR[course.category] || course.category}
-            </div>
+            {/* category badge — shows primary category, backward compatible */}
+            {getPrimaryLabel(course) && (
+              <div
+                className="absolute bottom-3 right-3 px-2.5 py-1 rounded-lg text-xs font-bold"
+                style={{
+                  background: 'rgba(9,21,37,0.82)',
+                  border: '1px solid rgba(201,147,74,0.18)',
+                  color: GOLD,
+                }}
+              >
+                {getPrimaryLabel(course)}
+              </div>
+            )}
 
             {/* free badge */}
             {course.pricingType === 'free' && (

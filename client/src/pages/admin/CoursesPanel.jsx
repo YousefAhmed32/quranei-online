@@ -3,11 +3,17 @@ import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Plus, Edit3, Trash2, Star, Eye, EyeOff, Save, X,
-  BookOpen, ChevronUp, ChevronDown, Search, Filter,
+  BookOpen, ChevronUp, ChevronDown, Search, Check,
 } from 'lucide-react'
 import qToast from '../../components/ui/Toast'
 import ImageUpload from '../../components/ui/ImageUpload'
 import { courseService, teacherService } from '../../services/api'
+import {
+  COURSE_CATEGORIES,
+  CAT_AR,
+  getCourseCategories,
+  getPrimaryLabel,
+} from '../../constants/courseCategories'
 
 /* ── tokens ── */
 const G   = '#dfab70'
@@ -15,8 +21,7 @@ const GD  = '#906130'
 const NAV = '#040816'
 
 /* ════════════════════════════════════════════
-   MICRO COMPONENTS (self-contained so panel
-   works standalone without AdminDashboard)
+   MICRO COMPONENTS
 ════════════════════════════════════════════ */
 function GoldBtn({ children, onClick, disabled, sm, danger }) {
   return (
@@ -136,9 +141,9 @@ function LuxModal({ open, onClose, title, children, wide }) {
             overflowY: 'auto', padding: 'clamp(16px,5vw,40px) clamp(12px,4vw,20px)',
           }}
         >
-        <motion.div
-  initial={false}
-  animate={{ scale: 1, y: 0 }}
+          <motion.div
+            initial={false}
+            animate={{ scale: 1, y: 0 }}
             exit={{ scale: 0.9, y: 24 }}
             transition={{ ease: [0.22, 1, 0.36, 1], duration: 0.35 }}
             style={{
@@ -170,8 +175,8 @@ function LuxModal({ open, onClose, title, children, wide }) {
             {/* body */}
             <div style={{
               padding: 'clamp(16px,3.5vw,24px)',
-              maxHeight: 'calc(100dvh - 140px)',overflowY: 'scroll',
-overscrollBehavior: 'contain',
+              maxHeight: 'calc(100dvh - 140px)', overflowY: 'scroll',
+              overscrollBehavior: 'contain',
             }}>
               {children}
             </div>
@@ -182,7 +187,7 @@ overscrollBehavior: 'contain',
   )
 }
 
-/* ── multi-value input (outcomes / targets / highlights / tags) ── */
+/* ── multi-value chip input (outcomes / targets / highlights / tags) ── */
 function ChipInput({ label, values = [], onChange, placeholder }) {
   const [draft, setDraft] = useState('')
 
@@ -226,7 +231,7 @@ function ChipInput({ label, values = [], onChange, placeholder }) {
               color: G, fontSize: 11,
             }}>
               {v}
-             <button type="button" onClick={() => remove(i)} style={{
+              <button type="button" onClick={() => remove(i)} style={{
                 background: 'none', border: 'none', color: 'rgba(223,171,112,0.5)',
                 cursor: 'pointer', padding: 0, display: 'flex', lineHeight: 1,
               }}>×</button>
@@ -239,8 +244,135 @@ function ChipInput({ label, values = [], onChange, placeholder }) {
 }
 
 /* ════════════════════════════════════════════
+   CATEGORY MULTI-SELECT COMPONENT
+   — اختيار تصنيف واحد أو أكثر بشكل مرن —
+════════════════════════════════════════════ */
+function CategoryMultiSelect({ label, value = [], onChange }) {
+  const toggle = (key) => {
+    if (value.includes(key)) {
+      // إزالة التصنيف
+      onChange(value.filter(k => k !== key))
+    } else {
+      // إضافة التصنيف
+      onChange([...value, key])
+    }
+  }
+
+  return (
+    <div>
+      {/* Label */}
+      {label && (
+        <div style={{ color: G, fontSize: 11, fontWeight: 700, marginBottom: 8 }}>
+          {label}
+          <span style={{ color: 'rgba(255,255,255,0.22)', fontWeight: 400, marginRight: 8, fontSize: 10 }}>
+            (اختر تصنيفاً أو أكثر — اختياري)
+          </span>
+        </div>
+      )}
+
+      {/* Category chips grid */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+        {COURSE_CATEGORIES.map(cat => {
+          const isSelected = value.includes(cat.key)
+          return (
+            <motion.button
+              key={cat.key}
+              type="button"
+              onClick={() => toggle(cat.key)}
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.95 }}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                padding: '7px 16px', borderRadius: 22,
+                border: `1.5px solid ${isSelected ? 'rgba(223,171,112,0.6)' : 'rgba(223,171,112,0.12)'}`,
+                background: isSelected
+                  ? 'linear-gradient(135deg,rgba(144,97,48,0.38),rgba(223,171,112,0.18))'
+                  : 'rgba(7,15,28,0.55)',
+                color: isSelected ? G : 'rgba(255,255,255,0.38)',
+                fontFamily: 'Cairo, sans-serif', fontSize: 12,
+                fontWeight: isSelected ? 800 : 400,
+                cursor: 'pointer',
+                transition: 'all 0.22s ease',
+                boxShadow: isSelected
+                  ? '0 0 16px rgba(223,171,112,0.18)'
+                  : 'none',
+              }}
+            >
+              <AnimatePresence mode="wait">
+                {isSelected && (
+                  <motion.span
+                    key="check"
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0, opacity: 0 }}
+                    transition={{ duration: 0.15 }}
+                    style={{ display: 'flex', alignItems: 'center' }}
+                  >
+                    <Check size={10} strokeWidth={3} />
+                  </motion.span>
+                )}
+              </AnimatePresence>
+              {cat.label}
+            </motion.button>
+          )
+        })}
+      </div>
+
+      {/* Selected summary pills */}
+      <AnimatePresence>
+        {value.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.2 }}
+            style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}
+          >
+            <span style={{ color: 'rgba(223,171,112,0.45)', fontSize: 10 }}>المختار:</span>
+            {value.map(key => (
+              <motion.span
+                key={key}
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.8, opacity: 0 }}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 5,
+                  padding: '3px 10px', borderRadius: 12,
+                  background: 'rgba(223,171,112,0.1)',
+                  border: '1px solid rgba(223,171,112,0.25)',
+                  color: G, fontSize: 11, fontWeight: 700,
+                }}
+              >
+                {CAT_AR[key] || key}
+                <button
+                  type="button"
+                  onClick={() => toggle(key)}
+                  style={{
+                    background: 'none', border: 'none',
+                    color: 'rgba(223,171,112,0.45)',
+                    cursor: 'pointer', padding: 0,
+                    lineHeight: 1, fontSize: 14,
+                    display: 'flex', alignItems: 'center',
+                  }}
+                >×</button>
+              </motion.span>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Empty hint */}
+      {value.length === 0 && (
+        <div style={{ color: 'rgba(255,255,255,0.18)', fontSize: 10, marginTop: 7 }}>
+          لم يُختر أي تصنيف — يمكنك تركه فارغاً أو اختيار تصنيف واحد أو أكثر
+        </div>
+      )}
+    </div>
+  )
+}
+
+/* ════════════════════════════════════════════
    DEFAULT EMPTY FORM
-   كل حقل له قيمة ابتدائية صريحة — مفيش undefined
 ════════════════════════════════════════════ */
 const EMPTY = {
   title:            '',
@@ -249,7 +381,8 @@ const EMPTY = {
   description:      '',
   thumbnail:        '',
   heroVideo:        '',
-  category:         'quran',
+  category:         'quran',   // legacy field — synced from categories[0]
+  categories:       [],        // new multi-category field
   level:            'beginner',
   duration:         '',
   lessonsCount:     0,
@@ -258,7 +391,6 @@ const EMPTY = {
   reviewsCount:     0,
   teacherName:      '',
   teacher:          '',
-  // ✅ pricingType دايمًا 'contact' كـ default
   pricingType:      'contact',
   price:            0,
   currency:         'ريال',
@@ -279,30 +411,30 @@ const EMPTY = {
 /* ════════════════════════════════════════════
    COURSES PANEL
 ════════════════════════════════════════════ */
-   const FormSection = ({ title: t, children }) => (
-    <div style={{ marginBottom: 4 }}>
-      <div style={{
-        color: 'rgba(223,171,112,0.6)', fontSize: 10, fontWeight: 800,
-        letterSpacing: '1.5px', marginBottom: 10, marginTop: 6,
-        textTransform: 'uppercase', borderBottom: '1px solid rgba(223,171,112,0.08)',
-        paddingBottom: 6,
-      }}>{t}</div>
-      {children}
-    </div>
-  )
+const FormSection = ({ title: t, children }) => (
+  <div style={{ marginBottom: 4 }}>
+    <div style={{
+      color: 'rgba(223,171,112,0.6)', fontSize: 10, fontWeight: 800,
+      letterSpacing: '1.5px', marginBottom: 10, marginTop: 6,
+      textTransform: 'uppercase', borderBottom: '1px solid rgba(223,171,112,0.08)',
+      paddingBottom: 6,
+    }}>{t}</div>
+    {children}
+  </div>
+)
 
-  const grid2 = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: 12 }
+const grid2 = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: 12 }
 
 
 export default function CoursesPanel() {
-  const [courses,  setCourses]  = useState([])
-  const [teachers, setTeachers] = useState([])
-  const [loading,  setLoading]  = useState(true)
-  const [search,   setSearch]   = useState('')
-  const [catFilter,setCatFilter]= useState('')
+  const [courses,   setCourses]   = useState([])
+  const [teachers,  setTeachers]  = useState([])
+  const [loading,   setLoading]   = useState(true)
+  const [search,    setSearch]    = useState('')
+  const [catFilter, setCatFilter] = useState('')
 
   const [showForm, setShowForm] = useState(false)
-  const [editing,  setEditing]  = useState(null)   // null = create, object = edit
+  const [editing,  setEditing]  = useState(null)
   const [form,     setForm]     = useState({ ...EMPTY })
   const [saving,   setSaving]   = useState(false)
 
@@ -320,29 +452,36 @@ export default function CoursesPanel() {
 
   useEffect(load, [load])
 
-  /* ── helper: merge course into EMPTY so no field is undefined ── */
+  /* ── merge course into EMPTY — backward compatible with old category field ── */
   const mergeWithEmpty = (course) => {
     const merged = { ...EMPTY }
     Object.keys(EMPTY).forEach(k => {
       const v = course[k]
-      if (v === undefined || v === null) return   // keep default
+      if (v === undefined || v === null) return
       merged[k] = v
     })
-    // ✅ تأكد pricingType valid
-    if (!['free','paid','contact'].includes(merged.pricingType)) {
+
+    // ✅ pricingType validation
+    if (!['free', 'paid', 'contact'].includes(merged.pricingType)) {
       merged.pricingType = 'contact'
     }
-    // arrays
-    ;['learningOutcomes','targetStudents','highlights','tags'].forEach(f => {
+
+    // ✅ arrays
+    ;['learningOutcomes', 'targetStudents', 'highlights', 'tags'].forEach(f => {
       if (!Array.isArray(merged[f])) merged[f] = []
     })
-    // teacher ref
+
+    // ✅ Backward-compatible categories:
+    //    If the course has no categories array (legacy doc), derive it from category
+    if (!Array.isArray(merged.categories) || merged.categories.length === 0) {
+      merged.categories = course.category ? [course.category] : []
+    }
+
+    // ✅ teacher ref
     merged.teacher = course.teacher?._id || course.teacher || ''
+
     return merged
   }
-
-
-  
 
   /* ── open create ── */
   const openCreate = () => {
@@ -367,22 +506,31 @@ export default function CoursesPanel() {
     setForm(f => ({
       ...f,
       title,
-      // لو بنعمل create وما غيّرناش الـ slug manually، نولّده تلقائيًا
       slug: editing ? f.slug : title
         .trim()
         .toLowerCase()
         .replace(/\s+/g, '-')
-        .replace(/[^\u0621-\u064Aa-z0-9-]/g, '')
+        .replace(/[^ء-يa-z0-9-]/g, '')
         .replace(/-+/g, '-'),
     }))
   }
 
-  /* ── build payload — نضمن مفيش قيم غلط توصل للـ API ── */
+  /* ── build payload ── */
   const buildPayload = () => {
     const f = form
-    const pricingType = ['free','paid','contact'].includes(f.pricingType)
+    const pricingType = ['free', 'paid', 'contact'].includes(f.pricingType)
       ? f.pricingType
       : 'contact'
+
+    // ✅ Multi-categories support
+    const categories = Array.isArray(f.categories)
+      ? f.categories.filter(Boolean)
+      : []
+
+    // Sync legacy `category` to the first selected category (or fallback to 'quran')
+    const category = categories.length > 0
+      ? categories[0]
+      : (f.category || 'quran')
 
     return {
       title:            f.title.trim(),
@@ -391,7 +539,8 @@ export default function CoursesPanel() {
       description:      f.description || '',
       thumbnail:        f.thumbnail || '',
       heroVideo:        f.heroVideo || '',
-      category:         f.category || 'quran',
+      category,         // legacy compat — always synced to first category
+      categories,       // new multi-category field
       level:            f.level || 'beginner',
       duration:         f.duration || '',
       lessonsCount:     Number(f.lessonsCount) || 0,
@@ -456,7 +605,6 @@ export default function CoursesPanel() {
   /* ── toggle publish ── */
   const togglePublish = async (course) => {
     try {
-      const payload = buildPayload.call({ form: mergeWithEmpty(course) }) // unused — build manually
       await courseService.adminUpdate(course._id, { isPublished: !course.isPublished })
       load()
     } catch {
@@ -487,18 +635,12 @@ export default function CoursesPanel() {
     load()
   }
 
-  /* ── filtered list ── */
+  /* ── filtered list — backward-compatible with old category field ── */
   const filtered = courses.filter(c => {
-    const matchSearch = !search   || c.title.toLowerCase().includes(search.toLowerCase())
-    const matchCat    = !catFilter || c.category === catFilter
+    const matchSearch = !search    || c.title.toLowerCase().includes(search.toLowerCase())
+    const matchCat    = !catFilter || getCourseCategories(c).includes(catFilter)
     return matchSearch && matchCat
   })
-
-  /* ════════════════════
-     FORM SECTIONS
-  ════════════════════ */
- 
-
 
   /* ════════════════════
      RENDER
@@ -547,6 +689,8 @@ export default function CoursesPanel() {
             style={{ background: 'transparent', border: 'none', outline: 'none', color: 'rgba(255,255,255,0.7)', fontSize: 12, flex: 1, fontFamily: 'Cairo,sans-serif', direction: 'rtl' }}
           />
         </div>
+
+        {/* ✅ Category filter — from unified constants */}
         <select
           value={catFilter} onChange={e => setCatFilter(e.target.value)}
           style={{
@@ -556,10 +700,9 @@ export default function CoursesPanel() {
           }}
         >
           <option value="">كل التصنيفات</option>
-          <option value="quran">القرآن</option>
-          <option value="tajweed">التجويد</option>
-          <option value="arabic">العربية</option>
-          <option value="islamic">الدراسات الإسلامية</option>
+          {COURSE_CATEGORIES.map(cat => (
+            <option key={cat.key} value={cat.key}>{cat.label}</option>
+          ))}
         </select>
       </div>
 
@@ -580,95 +723,90 @@ export default function CoursesPanel() {
           {filtered
             .sort((a, b) => (a.priorityOrder || 999) - (b.priorityOrder || 999))
             .map((c, i) => (
-            <motion.div key={c._id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
-              <Card p={16}>
-                {/* thumbnail */}
-              {(c.thumbnail || c.thumbnailId) && (
-  <div style={{
-    width: '100%',
-    height: 110,
-    borderRadius: 10,
-    marginBottom: 12,
-    overflow: 'hidden',
-    background: 'rgba(7,15,28,0.6)',
-  }}>
-    <img
-      src={
-        c.thumbnail?.startsWith('http')
-          ? c.thumbnail
-          : `https://api.quranei.com/api/media/stream/${c.thumbnail || c.thumbnailId}`
-      }
-      alt={c.title}
-      style={{
-        width: '100%',
-        height: '100%',
-        objectFit: 'cover'
-      }}
-    />
-  </div>
-)}
-
-                {/* title + category */}
-                <div style={{ marginBottom: 10 }}>
-                  <div style={{ color: '#fff', fontSize: 13, fontWeight: 800, lineHeight: 1.4, marginBottom: 4 }}>{c.title}</div>
-                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 6, background: 'rgba(223,171,112,0.1)', color: G, border: '1px solid rgba(223,171,112,0.2)' }}>
-                      {c.category}
-                    </span>
-                    <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 6, background: 'rgba(129,140,248,0.1)', color: '#818cf8', border: '1px solid rgba(129,140,248,0.2)' }}>
-                      {c.level}
-                    </span>
-                    <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 6, background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.4)' }}>
-                      {c.pricingType === 'free' ? 'مجاني' : c.pricingType === 'paid' ? `${c.price} ${c.currency}` : 'تواصل'}
-                    </span>
-                  </div>
-                </div>
-
-                {/* actions */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(223,171,112,0.06)', paddingTop: 10 }}>
-                  {/* status badges */}
-                  <div style={{ display: 'flex', gap: 5 }}>
-                    <span style={{
-                      fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 6,
-                      ...(c.isPublished
-                        ? { background: 'rgba(34,197,94,0.1)', color: '#22c55e', border: '1px solid rgba(34,197,94,0.2)' }
-                        : { background: 'rgba(239,68,68,0.1)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.2)' })
+              <motion.div key={c._id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
+                <Card p={16}>
+                  {/* thumbnail */}
+                  {(c.thumbnail || c.thumbnailId) && (
+                    <div style={{
+                      width: '100%', height: 110, borderRadius: 10, marginBottom: 12,
+                      overflow: 'hidden', background: 'rgba(7,15,28,0.6)',
                     }}>
-                      {c.isPublished ? 'منشور' : 'مخفي'}
-                    </span>
-                    {c.featured && <Star size={12} fill={G} style={{ color: G }} />}
+                      <img
+                        src={
+                          c.thumbnail?.startsWith('http')
+                            ? c.thumbnail
+                            : `https://api.quranei.com/api/media/stream/${c.thumbnail || c.thumbnailId}`
+                        }
+                        alt={c.title}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                    </div>
+                  )}
+
+                  {/* title + categories */}
+                  <div style={{ marginBottom: 10 }}>
+                    <div style={{ color: '#fff', fontSize: 13, fontWeight: 800, lineHeight: 1.4, marginBottom: 6 }}>
+                      {c.title}
+                    </div>
+                    <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+                      {/* ✅ Show all categories — backward compatible */}
+                      {getCourseCategories(c).map(key => (
+                        <span key={key} style={{
+                          fontSize: 10, padding: '2px 8px', borderRadius: 6,
+                          background: 'rgba(223,171,112,0.1)', color: G,
+                          border: '1px solid rgba(223,171,112,0.2)',
+                        }}>
+                          {CAT_AR[key] || key}
+                        </span>
+                      ))}
+                      <span style={{
+                        fontSize: 10, padding: '2px 8px', borderRadius: 6,
+                        background: 'rgba(129,140,248,0.1)', color: '#818cf8',
+                        border: '1px solid rgba(129,140,248,0.2)',
+                      }}>
+                        {c.level}
+                      </span>
+                      <span style={{
+                        fontSize: 10, padding: '2px 8px', borderRadius: 6,
+                        background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.4)',
+                      }}>
+                        {c.pricingType === 'free' ? 'مجاني' : c.pricingType === 'paid' ? `${c.price} ${c.currency}` : 'تواصل'}
+                      </span>
+                    </div>
                   </div>
 
-                  {/* buttons */}
-                  <div style={{ display: 'flex', gap: 5 }}>
-                    {/* reorder */}
-                    <button onClick={() => moveOrder(c, -1)} title="رفع" style={iconBtn('rgba(255,255,255,0.08)', 'rgba(255,255,255,0.5)')}>
-                      <ChevronUp size={11} />
-                    </button>
-                    <button onClick={() => moveOrder(c, 1)} title="خفض" style={iconBtn('rgba(255,255,255,0.08)', 'rgba(255,255,255,0.5)')}>
-                      <ChevronDown size={11} />
-                    </button>
-                    {/* publish toggle */}
-                    <button onClick={() => togglePublish(c)} title={c.isPublished ? 'إخفاء' : 'نشر'} style={iconBtn('rgba(34,197,94,0.08)', '#22c55e')}>
-                      {c.isPublished ? <EyeOff size={11} /> : <Eye size={11} />}
-                    </button>
-                    {/* featured toggle */}
-                    <button onClick={() => toggleFeatured(c)} title={c.featured ? 'إلغاء التمييز' : 'تمييز'} style={iconBtn('rgba(223,171,112,0.08)', G)}>
-                      {c.featured ? <Star size={11} fill={G} /> : <Star size={11} />}
-                    </button>
-                    {/* edit */}
-                    <button onClick={() => openEdit(c)} style={iconBtn('rgba(223,171,112,0.08)', G)}>
-                      <Edit3 size={11} />
-                    </button>
-                    {/* delete */}
-                    <button onClick={() => handleDelete(c._id)} style={iconBtn('rgba(239,68,68,0.08)', '#ef4444')}>
-                      <Trash2 size={11} />
-                    </button>
+                  {/* actions */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(223,171,112,0.06)', paddingTop: 10 }}>
+                    {/* status badges */}
+                    <div style={{ display: 'flex', gap: 5 }}>
+                      <span style={{
+                        fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 6,
+                        ...(c.isPublished
+                          ? { background: 'rgba(34,197,94,0.1)', color: '#22c55e', border: '1px solid rgba(34,197,94,0.2)' }
+                          : { background: 'rgba(239,68,68,0.1)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.2)' })
+                      }}>
+                        {c.isPublished ? 'منشور' : 'مخفي'}
+                      </span>
+                      {c.featured && <Star size={12} fill={G} style={{ color: G }} />}
+                    </div>
+
+                    {/* buttons */}
+                    <div style={{ display: 'flex', gap: 5 }}>
+                      <button onClick={() => moveOrder(c, -1)} title="رفع"  style={iconBtn('rgba(255,255,255,0.08)', 'rgba(255,255,255,0.5)')}><ChevronUp size={11} /></button>
+                      <button onClick={() => moveOrder(c, 1)}  title="خفض" style={iconBtn('rgba(255,255,255,0.08)', 'rgba(255,255,255,0.5)')}><ChevronDown size={11} /></button>
+                      <button onClick={() => togglePublish(c)}  title={c.isPublished ? 'إخفاء' : 'نشر'} style={iconBtn('rgba(34,197,94,0.08)', '#22c55e')}>
+                        {c.isPublished ? <EyeOff size={11} /> : <Eye size={11} />}
+                      </button>
+                      <button onClick={() => toggleFeatured(c)} title={c.featured ? 'إلغاء التمييز' : 'تمييز'} style={iconBtn('rgba(223,171,112,0.08)', G)}>
+                        {c.featured ? <Star size={11} fill={G} /> : <Star size={11} />}
+                      </button>
+                      <button onClick={() => openEdit(c)}       style={iconBtn('rgba(223,171,112,0.08)', G)}><Edit3 size={11} /></button>
+                      <button onClick={() => handleDelete(c._id)} style={iconBtn('rgba(239,68,68,0.08)', '#ef4444')}><Trash2 size={11} /></button>
+                    </div>
                   </div>
-                </div>
-              </Card>
-            </motion.div>
-          ))}
+                </Card>
+              </motion.div>
+            ))}
         </div>
       )}
 
@@ -681,18 +819,10 @@ export default function CoursesPanel() {
         title={editing ? `تعديل: ${editing.title}` : 'إضافة دورة جديدة'}
         wide
       >
-<form
-  onSubmit={(e) => {
-    e.preventDefault()
-    handleSave()
-  }}
-  style={{
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 16,
-    direction: 'rtl'
-  }}
->
+        <form
+          onSubmit={e => { e.preventDefault(); handleSave() }}
+          style={{ display: 'flex', flexDirection: 'column', gap: 16, direction: 'rtl' }}
+        >
           {/* ── Basic ── */}
           <FormSection title="المعلومات الأساسية">
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -705,25 +835,26 @@ export default function CoursesPanel() {
               <LuxInput
                 label="Slug (رابط الدورة) *"
                 value={form.slug}
-                onChange={e => setF('slug', e.target.value.toLowerCase().replace(/\s+/g, '-').replace(/[^\u0621-\u064Aa-z0-9-]/g, ''))}
+                onChange={e => setF('slug', e.target.value.toLowerCase().replace(/\s+/g, '-').replace(/[^ء-يa-z0-9-]/g, ''))}
                 placeholder="course-slug"
                 dir="ltr"
                 hint="يُستخدم في رابط الدورة — بدون مسافات"
               />
-              <div style={grid2}>
-                <LuxSelect label="التصنيف" value={form.category} onChange={e => setF('category', e.target.value)}>
-                  <option value="quran">القرآن الكريم</option>
-                  <option value="tajweed">التجويد</option>
-                  <option value="arabic">اللغة العربية</option>
-                  <option value="islamic">الدراسات الإسلامية</option>
-                </LuxSelect>
-                <LuxSelect label="المستوى" value={form.level} onChange={e => setF('level', e.target.value)}>
-                  <option value="beginner">مبتدئ</option>
-                  <option value="intermediate">متوسط</option>
-                  <option value="advanced">متقدم</option>
-                  <option value="all">للجميع</option>
-                </LuxSelect>
-              </div>
+
+              {/* ✅ Multi-Category Selector */}
+              <CategoryMultiSelect
+                label="التصنيفات"
+                value={form.categories}
+                onChange={v => setF('categories', v)}
+              />
+
+              <LuxSelect label="المستوى" value={form.level} onChange={e => setF('level', e.target.value)}>
+                <option value="beginner">مبتدئ</option>
+                <option value="intermediate">متوسط</option>
+                <option value="advanced">متقدم</option>
+                <option value="all">للجميع</option>
+              </LuxSelect>
+
               <LuxInput label="وصف مختصر" value={form.shortDescription} onChange={e => setF('shortDescription', e.target.value)} rows={2} />
               <LuxInput label="وصف تفصيلي" value={form.description} onChange={e => setF('description', e.target.value)} rows={4} />
             </div>
@@ -733,25 +864,17 @@ export default function CoursesPanel() {
           <FormSection title="الوسائط">
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <ImageUpload
-  label="صورة الغلاف"
-  value={form.thumbnail || form.thumbnailId || ''}
-  onChange={v => {
-    if (v && v.match(/^[0-9a-fA-F]{24}$/)) {
-      setForm(f => ({
-        ...f,
-        thumbnailId: v,
-        thumbnail: '',
-      }))
-    } else {
-      setForm(f => ({
-        ...f,
-        thumbnail: v || '',
-        thumbnailId: '',
-      }))
-    }
-  }}
-  hint="ارفع صورة أو الصق رابطاً — اختياري"
-/>
+                label="صورة الغلاف"
+                value={form.thumbnail || form.thumbnailId || ''}
+                onChange={v => {
+                  if (v && v.match(/^[0-9a-fA-F]{24}$/)) {
+                    setForm(f => ({ ...f, thumbnailId: v, thumbnail: '' }))
+                  } else {
+                    setForm(f => ({ ...f, thumbnail: v || '', thumbnailId: '' }))
+                  }
+                }}
+                hint="ارفع صورة أو الصق رابطاً — اختياري"
+              />
               <LuxInput
                 label="رابط الفيديو التعريفي"
                 value={form.heroVideo}
@@ -787,26 +910,16 @@ export default function CoursesPanel() {
           <FormSection title="التسعير">
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div style={grid2}>
-                {/* ✅ pricingType select — العنصر الحاسم */}
                 <LuxSelect label="نوع التسعير" value={form.pricingType} onChange={e => setF('pricingType', e.target.value)}>
                   <option value="contact">تواصل للاشتراك</option>
                   <option value="free">مجاني</option>
                   <option value="paid">مدفوع</option>
                 </LuxSelect>
                 {form.pricingType === 'paid' && (
-                  <LuxInput
-                    label="السعر"
-                    value={form.price}
-                    onChange={e => setF('price', e.target.value)}
-                    type="number"
-                  />
+                  <LuxInput label="السعر" value={form.price} onChange={e => setF('price', e.target.value)} type="number" />
                 )}
                 {form.pricingType === 'paid' && (
-                  <LuxInput
-                    label="العملة"
-                    value={form.currency}
-                    onChange={e => setF('currency', e.target.value)}
-                  />
+                  <LuxInput label="العملة" value={form.currency} onChange={e => setF('currency', e.target.value)} />
                 )}
               </div>
               <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
@@ -836,9 +949,9 @@ export default function CoursesPanel() {
           <FormSection title="محتوى التعلم (اختياري)">
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <ChipInput label="ماذا ستتعلم" values={form.learningOutcomes} onChange={v => setF('learningOutcomes', v)} placeholder="أضف نقطة ثم Enter" />
-              <ChipInput label="الفئة المستهدفة" values={form.targetStudents} onChange={v => setF('targetStudents', v)} />
-              <ChipInput label="مميزات الدورة" values={form.highlights} onChange={v => setF('highlights', v)} />
-              <ChipInput label="الوسوم (Tags)" values={form.tags} onChange={v => setF('tags', v)} />
+              <ChipInput label="الفئة المستهدفة" values={form.targetStudents}  onChange={v => setF('targetStudents', v)} />
+              <ChipInput label="مميزات الدورة"   values={form.highlights}      onChange={v => setF('highlights', v)} />
+              <ChipInput label="الوسوم (Tags)"   values={form.tags}            onChange={v => setF('tags', v)} />
             </div>
           </FormSection>
 
@@ -846,10 +959,7 @@ export default function CoursesPanel() {
           <FormSection title="الظهور والترتيب">
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
-                {[
-                  ['isPublished', 'منشور'],
-                  ['featured',    'مميز'],
-                ].map(([k, l]) => (
+                {[['isPublished', 'منشور'], ['featured', 'مميز']].map(([k, l]) => (
                   <label key={k} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', minHeight: 32 }}>
                     <input type="checkbox" checked={!!form[k]} onChange={e => setF(k, e.target.checked)} style={{ accentColor: G, width: 15, height: 15 }} />
                     <span style={{ color: 'rgba(255,255,255,0.45)', fontSize: 13 }}>{l}</span>
@@ -869,8 +979,8 @@ export default function CoursesPanel() {
           {/* ── SEO ── */}
           <FormSection title="SEO (اختياري)">
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <LuxInput label="عنوان SEO" value={form.seoTitle} onChange={e => setF('seoTitle', e.target.value)} hint="اختياري" />
-              <LuxInput label="وصف SEO" value={form.seoDescription} onChange={e => setF('seoDescription', e.target.value)} rows={2} hint="اختياري" />
+              <LuxInput label="عنوان SEO"  value={form.seoTitle}       onChange={e => setF('seoTitle', e.target.value)}       hint="اختياري" />
+              <LuxInput label="وصف SEO"    value={form.seoDescription} onChange={e => setF('seoDescription', e.target.value)} rows={2} hint="اختياري" />
             </div>
           </FormSection>
 
@@ -885,8 +995,6 @@ export default function CoursesPanel() {
             </GoldBtn>
           </div>
         </form>
-
-
       </LuxModal>
     </div>
   )

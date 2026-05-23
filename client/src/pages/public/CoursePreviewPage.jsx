@@ -4,12 +4,12 @@ import { motion } from 'framer-motion'
 import { BookOpen, Clock, Star, Users, CheckCircle2, Play, MessageCircle, ChevronRight, Lock, GraduationCap, Target } from 'lucide-react'
 import PublicLayout from '../../components/layout/PublicLayout'
 import { courseService } from '../../services/api'
+import { CAT_AR, getCourseCategories, getPrimaryLabel } from '../../constants/courseCategories'
 
 const G = '#dfab70'
 const GD = '#906130'
 
 const LEVEL_AR = { beginner: 'مبتدئ', intermediate: 'متوسط', advanced: 'متقدم', all: 'جميع المستويات' }
-const CAT_AR = { tajweed:'التجويد', quran:'القرآن', memorization:'الحفظ', recitation:'التلاوة', ijazah:'الإجازة', correction:'التصحيح', arabic:'العربية', other:'أخرى' }
 
 function YoutubeEmbed({ url }) {
   if (!url) return null
@@ -153,11 +153,15 @@ export default function CoursePreviewPage() {
             </div>
 
             <div className="max-w-3xl">
-              {/* Category badge */}
-              {course.category && (
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full mb-4 text-xs font-bold"
-                  style={{ background: 'rgba(223,171,112,0.12)', border: '1px solid rgba(223,171,112,0.3)', color: G }}>
-                  {CAT_AR[course.category] || course.category}
+              {/* Category badges — backward compatible, shows all categories */}
+              {getCourseCategories(course).length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {getCourseCategories(course).map(key => (
+                    <div key={key} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold"
+                      style={{ background: 'rgba(223,171,112,0.12)', border: '1px solid rgba(223,171,112,0.3)', color: G }}>
+                      {CAT_AR[key] || key}
+                    </div>
+                  ))}
                 </div>
               )}
 

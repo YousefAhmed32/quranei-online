@@ -11,9 +11,12 @@ const CourseSchema = new mongoose.Schema({
   description:      { type: String, default: '' },
 
   // ── Classification ────────────────────────────────────────────────────
-  category: { type: String, default: 'quran', trim: true },
-  level:    { type: String, default: 'beginner', enum: ['beginner','intermediate','advanced','all'] },
-  tags:     [{ type: String, trim: true }],
+  // Legacy single-category field — kept for backward compatibility
+  category:   { type: String, default: 'quran', trim: true },
+  // New multi-category field — optional, can be empty for single-category courses
+  categories: [{ type: String, trim: true }],
+  level:      { type: String, default: 'beginner', enum: ['beginner','intermediate','advanced','all'] },
+  tags:       [{ type: String, trim: true }],
 
   // ── Media ─────────────────────────────────────────────────────────────
   thumbnail: { type: String, default: null },
@@ -63,6 +66,7 @@ const CourseSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 CourseSchema.index({ category: 1, level: 1 });
+CourseSchema.index({ categories: 1, level: 1 });
 CourseSchema.index({ isPublished: 1, featured: -1, priorityOrder: 1 });
 CourseSchema.index({ title: 'text', description: 'text', tags: 'text' });
 

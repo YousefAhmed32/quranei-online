@@ -2,6 +2,8 @@ import { useRef, useState } from 'react'
 import { motion, useInView } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
+// ✅ Imported from unified source — category keys validated against constants
+import { COURSE_CATEGORIES } from '../../constants/courseCategories'
 
 const GOLD       = '#dfab70'
 const GOLD_DARK  = '#906130'
