@@ -6,55 +6,66 @@ const router  = express.Router();
 const Course  = require("../models/Course");
 const { protect, adminOnly } = require("../middlewares/auth");
 
-/* ─── helper: نظّف الـ body قبل ما يوصل لـ mongoose ─── */
+/* ─── helper: نظّف الـ body قبل ما يوصل لـ mongoose ───────────────────────────
+   ⚠️  IMPORTANT: هذه الدالة تعمل مع FULL saves و Partial updates.
+       لضمان عدم الكتابة فوق حقول غير مرسلة، نتحقق من وجود الحقل في الـ body
+       قبل تعديله (باستخدام 'key' in data).
+   ─────────────────────────────────────────────────────────────────────────── */
 function sanitizeCourse(body) {
   const data = { ...body };
 
-  // ✅ تأكد pricingType دايمًا valid
-  if (!['free', 'paid', 'contact'].includes(data.pricingType)) {
-    data.pricingType = 'contact';
+  // ✅ pricingType + price — فقط إذا pricingType موجود في الطلب
+  if ('pricingType' in data) {
+    if (!['free', 'paid', 'contact'].includes(data.pricingType)) {
+      data.pricingType = 'contact';
+    }
+    if (data.pricingType !== 'paid') data.price = 0;
   }
 
-  // ✅ لو مش paid، السعر صفر
-  if (data.pricingType !== 'paid') data.price = 0;
+  // ✅ حقول رقمية — احذفها لو فاضية (وهي موجودة في الطلب)
+  ['lessonsCount','studentsCount','rating','reviewsCount','price'].forEach(f => {
+    if (f in data && (data[f] === '' || data[f] === undefined)) delete data[f];
+  });
 
-  // ✅ حقول رقمية — لو فاضية نحطها default بدل ما تبقى string فاضي
-  if (data.lessonsCount === '' || data.lessonsCount === undefined) delete data.lessonsCount;
-  if (data.studentsCount === '' || data.studentsCount === undefined) delete data.studentsCount;
-  if (data.rating       === '' || data.rating       === undefined) delete data.rating;
-  if (data.reviewsCount === '' || data.reviewsCount === undefined) delete data.reviewsCount;
-  if (data.price        === '' || data.price        === undefined) delete data.price;
-
-  // ✅ priorityOrder — لو فاضي استخدم 999
-  if (data.priorityOrder === '' || data.priorityOrder === undefined || data.priorityOrder === null) {
-    data.priorityOrder = 999;
+  // ✅ priorityOrder — فقط إذا موجود في الطلب
+  if ('priorityOrder' in data) {
+    if (data.priorityOrder === '' || data.priorityOrder === null || data.priorityOrder === undefined) {
+      data.priorityOrder = 999;
+    }
   }
 
-  // ✅ حقول نصية — لو null خليها string فاضي
+  // ✅ حقول نصية — نظّف null/undefined فقط إذا الحقل موجود في الطلب
   const textFields = ['shortDescription','description','thumbnail','heroVideo',
                       'teacherName','currency','whatsapp','ctaText',
                       'duration','seoTitle','seoDescription'];
   textFields.forEach(f => {
-    if (data[f] === null || data[f] === undefined) data[f] = '';
+    if (f in data && (data[f] === null || data[f] === undefined)) data[f] = '';
   });
 
-  // ✅ arrays — لو مش array خليه array فاضي
+  // ✅ arrays — نظّف فقط إذا الحقل موجود في الطلب
   ['learningOutcomes','targetStudents','highlights','tags'].forEach(f => {
-    if (!Array.isArray(data[f])) data[f] = [];
+    if (f in data && !Array.isArray(data[f])) data[f] = [];
   });
 
   // ✅ Multi-category support — backward compatible
+  //    RULE: لا نلمس categories إلا إذا كانت موجودة صراحةً في الطلب.
+  //    هذا يمنع partial updates (مثل toggle publish) من مسح التصنيفات.
   if (Array.isArray(data.categories)) {
-    // Clean: keep only non-empty strings
+    // الحالة الجديدة: categories array مرسلة صراحةً من الـ frontend
     data.categories = data.categories.filter(c => typeof c === 'string' && c.trim());
-    // Sync legacy `category` field to the first selected category
+    // زامِن الحقل القديم (legacy) مع أول تصنيف
     if (data.categories.length > 0) {
       data.category = data.categories[0];
     }
-  } else {
-    // Legacy path: only `category` provided — derive categories array from it
+  } else if ('categories' in data) {
+    // categories موجودة لكن ليست array — نعاملها كـ empty
+    data.categories = [];
+  } else if ('category' in data) {
+    // Legacy path: فقط category القديمة مرسلة (client قديم) → اشتقّ categories منها
     data.categories = data.category ? [data.category] : [];
   }
+  // إذا لم تكن categories ولا category في الطلب (partial update مثل { isPublished: true })
+  // → لا نلمس أي حقل → البيانات الموجودة في قاعدة البيانات تبقى كما هي ✅
 
   return data;
 }
@@ -137,10 +148,12 @@ router.post("/admin/create", protect, adminOnly, async (req, res) => {
 router.put("/admin/:id", protect, adminOnly, async (req, res) => {
   try {
     const payload = sanitizeCourse(req.body);
+    // ✅ استخدم $set صراحةً لضمان تحديث حقل categories كـ array كاملة
+    //    (بدون $set قد يتصرف Mongoose بشكل مختلف مع arrays في بعض الإصدارات)
     const course  = await Course.findByIdAndUpdate(
       req.params.id,
-      payload,
-      { new: true, runValidators: true }
+      { $set: payload },
+      { new: true, runValidators: false }
     );
     if (!course) return res.status(404).json({ success: false, message: "الدورة غير موجودة" });
     res.json({ success: true, course });
