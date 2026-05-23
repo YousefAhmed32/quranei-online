@@ -10,12 +10,15 @@ const GOLD_GLOW  = 'rgba(223,171,112,0.18)'
 const PROGRAMS = [
   {
     id: 1,
+    category: 'memorization',
+
     number: '٠١',
     icon: '📖',
     title: 'برنامج الحفظ والتأسيس القرآني',
     tagline: 'رحلة التأسيس والحفظ المتدرّج',
     desc: 'برنامج متكامل يُعنى ببناء القراءة الصحيحة وترسيخ الحفظ وفق منهجية تربوية متدرجة تناسب جميع الأعمار والمستويات.',
     level: 'اقرأ • ارتقِ • رتّل',
+
     accent: '#5e8abf',
     glow: 'rgba(94,138,191,0.2)',
     border: 'rgba(94,138,191,0.25)',
@@ -23,12 +26,14 @@ const PROGRAMS = [
 
   {
     id: 2,
+category: 'recitation',
     number: '٠٢',
     icon: '✦',
     title: 'برنامج التلاوة والإتقان',
     tagline: 'إتقان التلاوة بأداءٍ متقن',
     desc: 'يهدف البرنامج إلى تحسين التلاوة وضبط الأحكام وإخراج الحروف بإتقان من خلال تدريب عملي مباشر مع المعلمين المتخصصين.',
     level: 'السفرة • الكرام • البررة',
+
     accent: '#dfab70',
     glow: 'rgba(223,171,112,0.2)',
     border: 'rgba(223,171,112,0.3)',
@@ -36,12 +41,15 @@ const PROGRAMS = [
 
   {
     id: 3,
+    category: 'arabic',
+
     number: '٠٣',
     icon: '🪶',
     title: 'برامج اللغة العربية',
     tagline: 'لغة القرآن بأسلوبٍ عصري',
     desc: 'برامج تعليمية تهدف إلى تنمية المهارات اللغوية وفهم العربية الفصحى بأسلوب مبسط يربط الطالب بلغة القرآن الكريم.',
     level: 'لسان عربيّ • لغة القرآن',
+
     accent: '#4a9090',
     glow: 'rgba(74,144,144,0.2)',
     border: 'rgba(74,144,144,0.25)',
@@ -49,12 +57,15 @@ const PROGRAMS = [
 
   {
     id: 4,
+    category: 'sharia',
+
     number: '٠٤',
     icon: '📚',
     title: 'برامج العلوم الشرعية',
     tagline: 'علمٌ يُزكّي القلب والعقل',
     desc: 'مجموعة برامج شرعية وتربوية تهدف إلى بناء المسلم علميًا وإيمانيًا وفق القرآن الكريم والسنّة النبوية بأسلوب سهل وعميق.',
     level: '٥ برامج شرعية متخصصة',
+
     accent: '#9b7ecb',
     glow: 'rgba(155,126,203,0.2)',
     border: 'rgba(155,126,203,0.25)',
@@ -84,7 +95,10 @@ function ProgramCard({ p, i, inView }) {
       animate={inView ? { opacity: 1, y: 0 } : {}}
       transition={{ duration: 0.6, delay: i * 0.1, ease: [0.22, 1, 0.36, 1] }}
     >
-      <Link to="/courses" style={{ display: 'block', height: '100%', textDecoration: 'none' }}>
+    <Link
+  to={`/courses?category=${p.category}`}
+  style={{ display: 'block', height: '100%', textDecoration: 'none' }}
+>
         <div
           onMouseEnter={() => setHovered(true)}
           onMouseLeave={() => setHovered(false)}

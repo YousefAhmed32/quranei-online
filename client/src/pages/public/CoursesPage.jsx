@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 import { Search, BookOpen, Clock, Star, MessageCircle, Sparkles, Eye, Users, ChevronDown } from 'lucide-react'
 import PublicLayout from '../../components/layout/PublicLayout'
 import { courseService } from '../../services/api'
-
+import { useSearchParams } from 'react-router-dom'
 /* ─── Design tokens ─── */
   
 const GOLD = '#D6A85F'
@@ -616,6 +616,18 @@ export default function CoursesPage() {
   const [search, setSearch] = useState('')
   const [cat, setCat] = useState('')
   const [level, setLevel] = useState('')
+
+const [searchParams] = useSearchParams()
+
+useEffect(() => {
+  const categoryFromUrl = searchParams.get('category')
+
+  if (categoryFromUrl) {
+    setCat(categoryFromUrl)
+  }
+}, [searchParams])
+
+
 
   useEffect(() => {
     setLoading(true)
