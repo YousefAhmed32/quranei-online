@@ -247,17 +247,10 @@ function ChipInput({ label, values = [], onChange, placeholder }) {
    CATEGORY MULTI-SELECT COMPONENT
    — اختيار تصنيف واحد أو أكثر بشكل مرن —
 ════════════════════════════════════════════ */
-function CategoryMultiSelect({ label, value = [], onChange }) {
-  const toggle = (key) => {
-    if (value.includes(key)) {
-      // إزالة التصنيف
-      onChange(value.filter(k => k !== key))
-    } else {
-      // إضافة التصنيف
-      onChange([...value, key])
-    }
-  }
-
+// ✅ FIX: Changed from `onChange(array)` to `onToggle(key)` prop.
+//    The old `toggle()` function read from the stale `value` prop (React 18 concurrent mode
+//    stale closure bug). Now the parent handles state via functional updater — zero stale reads.
+function CategoryMultiSelect({ label, value = [], onToggle }) {
   return (
     <div>
       {/* Label */}
@@ -278,7 +271,7 @@ function CategoryMultiSelect({ label, value = [], onChange }) {
             <motion.button
               key={cat.key}
               type="button"
-              onClick={() => toggle(cat.key)}
+              onClick={() => onToggle(cat.key)}
               whileHover={{ scale: 1.04 }}
               whileTap={{ scale: 0.95 }}
               style={{
@@ -346,7 +339,7 @@ function CategoryMultiSelect({ label, value = [], onChange }) {
                 {CAT_AR[key] || key}
                 <button
                   type="button"
-                  onClick={() => toggle(key)}
+                  onClick={() => onToggle(key)}
                   style={{
                     background: 'none', border: 'none',
                     color: 'rgba(223,171,112,0.45)',
@@ -500,6 +493,17 @@ export default function CoursesPanel() {
   /* ── field setter ── */
   const setF = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
+  /* ── category toggle — functional updater avoids stale closure ── */
+  const handleCategoryToggle = (key) => {
+    setForm(prev => {
+      const cats = Array.isArray(prev.categories) ? prev.categories : []
+      const next  = cats.includes(key)
+        ? cats.filter(k => k !== key)
+        : [...cats, key]
+      return { ...prev, categories: next }
+    })
+  }
+
   /* ── auto-slug from title ── */
   const handleTitleChange = (e) => {
     const title = e.target.value
@@ -515,9 +519,8 @@ export default function CoursesPanel() {
     }))
   }
 
-  /* ── build payload ── */
-  const buildPayload = () => {
-    const f = form
+  /* ── build payload — accepts explicit snapshot to avoid stale closure ── */
+  const buildPayload = (f) => {
     const pricingType = ['free', 'paid', 'contact'].includes(f.pricingType)
       ? f.pricingType
       : 'contact'
@@ -573,7 +576,8 @@ export default function CoursesPanel() {
     if (!form.slug.trim())  return qToast.error('الـ Slug مطلوب')
     setSaving(true)
     try {
-      const payload = buildPayload()
+      // ✅ Pass `form` snapshot explicitly — avoids stale closure if React batches state
+      const payload = buildPayload(form)
       if (editing) {
         await courseService.adminUpdate(editing._id, payload)
         qToast.success('تم تحديث الدورة')
@@ -845,7 +849,7 @@ export default function CoursesPanel() {
               <CategoryMultiSelect
                 label="التصنيفات"
                 value={form.categories}
-                onChange={v => setF('categories', v)}
+                onToggle={handleCategoryToggle}
               />
 
               <LuxSelect label="المستوى" value={form.level} onChange={e => setF('level', e.target.value)}>
